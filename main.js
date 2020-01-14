@@ -15,10 +15,11 @@ var resourceLoaded = 0;
 
 var keys = [];
 
-var gravity = 0.19;
-var friction = 0.996;
-var boundFriction = 0.9;
-var playerSize = 32;
+const gravity = 0.19;
+const friction = 0.996;
+const sideJump = 5.1;
+const boundFriction = 0.9;
+const playerSize = 32;
 
 var player =
 {
@@ -138,14 +139,8 @@ function update(delta)
 
     if (player.onGround && !keys[' '] && player.crouching)
     {
-        if (keys['ArrowLeft'])
-        {
-            player.vx -= 10;
-        }
-        if (keys['ArrowRight'])
-        {
-            player.vx += 10;
-        }
+        if (keys['ArrowLeft']) player.vx -= sideJump;
+        if (keys['ArrowRight']) player.vx += sideJump;
         player.vy = player.jumpGauge * 15;
         player.jumpGauge = 0;
         player.onGround = false;
