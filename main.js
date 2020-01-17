@@ -18,7 +18,7 @@ var keys = [];
 const gravity = 0.19;
 const friction = 0.996;
 const sideJump = 5.1;
-const boundFriction = 0.9;
+const boundFriction = 0.55;
 const playerSize = 32;
 
 var player =
@@ -42,6 +42,33 @@ var player =
             return this.normal;
     },
     jumpGauge: 0
+}
+
+class AABB
+{
+    constructor(x, y, w, h)
+    {
+        this.minX = x;
+        this.minY = y;
+        this.maxX = x + w;
+        this.maxY = y + h;
+        this.width = w;
+        this.height = h;
+    }
+
+    checkCollidePoint(px, py)
+    {
+        if(px >= this.minX && px <= this.maxX && py >= this.minY && py <= this.maxY)
+            return true;
+    }
+
+    checkCollideBox(aabb)
+    {
+        return  this.checkCollidePoint(aabb.minX, aabb.minY) || 
+                this.checkCollidePoint(aabb.maxX, aabb.minY) || 
+                this.checkCollidePoint(aabb.minX, aabb.maxY) || 
+                this.checkCollidePoint(aabb.maxX, aabb.maxY);
+    }
 }
 
 window.onload = function ()
@@ -103,8 +130,6 @@ function update(delta)
     player.vy *= friction;
     player.y += player.vy;
 
-    console.log(player.vx);
-
     if (player.x <= 0)
     {
         player.x = 0;
@@ -134,7 +159,7 @@ function update(delta)
 
     if (player.onGround && keys[' '] && player.crouching)
     {
-        player.jumpGauge >= 1 ? player.jumpGauge = 1 : player.jumpGauge += delta / 500.0;
+        player.jumpGauge >= 1 ? player.jumpGauge = 1 : player.jumpGauge += delta / 600.0;
     }
 
     if (player.onGround && !keys[' '] && player.crouching)
@@ -156,4 +181,17 @@ function render()
     gfx.clearRect(0, 0, WIDTH, HEIGHT);
     gfx.drawImage(player.getDrawImage(), player.x, HEIGHT - playerSize - player.y, playerSize, playerSize);
 
+    drawAABB(new AABB(100, 100, 200, 50));
+}
+
+function drawAABB(aabb)
+{
+    drawBlock(aabb.minX, aabb.minY, aabb.width, aabb.height);
+}
+
+function drawBlock(x, y, w, h)
+{
+    gfx.beginPath();
+    gfx.rect(x, HEIGHT - y, w, -h);
+    gfx.fill();
 }
