@@ -10,7 +10,7 @@ var currentTime = 0;
 var passedTime = 0;
 var msPerFrame = 1000.0 / 144.0;
 
-var numResource = 2;
+const numResource = 2;
 var resourceLoaded = 0;
 
 var images = [];
@@ -21,6 +21,8 @@ const gravity = 0.19;
 const friction = 0.996;
 const sideJump = 5.1;
 const boundFriction = 0.55;
+const JumpConst = 15.0;
+const chargingConst = 600.0;
 
 var palyer;
 
@@ -38,7 +40,7 @@ class AABB
 
     checkCollidePoint(px, py)
     {
-        if (px >= this.x && px <= this.X && py >= this.y && py <= this.Y)
+        if (px > this.x && px < this.X && py > this.y && py < this.Y)
             return true;
         else
             return false;
@@ -46,10 +48,20 @@ class AABB
 
     checkCollideBox(aabb)
     {
-        return this.checkCollidePoint(aabb.x, aabb.y) ||
-            this.checkCollidePoint(aabb.X, aabb.y) ||
-            this.checkCollidePoint(aabb.x, aabb.Y) ||
-            this.checkCollidePoint(aabb.X, aabb.Y);
+        var rlb = this.checkCollidePoint(aabb.x, aabb.y);
+        var rrb = this.checkCollidePoint(aabb.X, aabb.y);
+        var rlt = this.checkCollidePoint(aabb.x, aabb.Y);
+        var rrt = this.checkCollidePoint(aabb.X, aabb.Y);
+
+        var res = {
+            collide: rlb || rrb || rlt || rrt,
+            lb: rlb,
+            rb: rrb,
+            lt: rlt,
+            rt: rrt,
+        };
+
+        return res;
     }
 }
 
@@ -67,8 +79,12 @@ class Player
         this.vx = 0;
         this.vy = 0;
         this.size = 32;
-        this.aabb = new AABB(x, y, this.size, this.size);
         this.jumpGauge = 0;
+    }
+
+    aabb()
+    {
+        return new AABB(this.x, this.y, this.size, this.size);
     }
 
     getDrawImage()
@@ -137,18 +153,49 @@ class Player
 
         if (this.onGround && keys[' '] && this.crouching)
         {
-            this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / 600.0;
+            this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
         }
 
         if (this.onGround && !keys[' '] && this.crouching)
         {
             if (keys['ArrowLeft']) this.vx -= sideJump;
             if (keys['ArrowRight']) this.vx += sideJump;
-            this.vy = this.jumpGauge * 15;
+            this.vy = this.jumpGauge * JumpConst;
             this.jumpGauge = 0;
             this.onGround = false;
             this.crouching = false;
         }
+
+        var box = this.aabb();
+
+        aabbs.forEach(aabb =>
+        {
+            var r = aabb.checkCollideBox(box);
+            if (r.collide)
+            {
+                if ((r.lt || r.lb) && (!r.rt && !r.rb) && this.vx < 0)
+                {
+                    this.collideToLeft(aabb.X);
+                }
+                else if ((!r.lt && !r.lb) && (r.rt || r.rb) && this.vx > 0)
+                {
+                    this.collideToRight(aabb.x);
+                }
+                else if (r.lb || r.rb && this.vy < 0)
+                {
+                    this.collideToBottom(aabb.Y);
+                }
+                else if (r.lt || r.rt && this.vy > 0)
+                {
+                    this.collideToTop(aabb.y);
+                }
+            }
+        });
+    }
+
+    render()
+    {
+        gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y, this.size, this.size);
     }
 }
 
@@ -169,7 +216,7 @@ function init()
     images['normal'] = new Image();
     images['normal'].src = "./normal.png";
     images['normal'].onload = function () { resourceLoaded++; };
-    
+
     images['crouch'] = new Image();
     images['crouch'].src = "./crouch.png";
     images['crouch'].onload = function () { resourceLoaded++; };
@@ -180,7 +227,11 @@ function init()
     player = new Player((WIDTH - 32) / 2.0, 0);
 
     //Add Blocks
-    aabbs.push(new AABB(100, 100, 200, 20));
+    aabbs.push(new AABB(100, 100, 200, 40));
+    aabbs.push(new AABB(330, 230, 200, 40));
+    aabbs.push(new AABB(710, 410, 200, 40));
+    aabbs.push(new AABB(330, 660, 200, 40));
+    aabbs.push(new AABB(10, 620, 100, 40));
 }
 
 function keyDown(e)
@@ -221,7 +272,8 @@ function render()
         return;
 
     gfx.clearRect(0, 0, WIDTH, HEIGHT);
-    gfx.drawImage(images[player.getDrawImage()], player.x, HEIGHT - player.size - player.y, player.size, player.size);
+
+    player.render();
 
     aabbs.forEach(function (aabb)
     {
