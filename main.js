@@ -13,61 +13,93 @@ var msPerFrame = 1000.0 / 144.0;
 var numResource = 2;
 var resourceLoaded = 0;
 
+var images = [];
 var keys = [];
 
 const gravity = 0.19;
 const friction = 0.996;
 const sideJump = 5.1;
 const boundFriction = 0.55;
-const playerSize = 32;
 
-var player =
-{
-    normal: new Image(),
-    crouch: new Image(),
-    speed: 1,
-    crouching: false,
-    onGround: true,
-    ax: 0,
-    ay: 0,
-    vx: 0,
-    vy: 0,
-    x: (WIDTH - playerSize) / 2.0,
-    y: 0,
-    getDrawImage: function ()
-    {
-        if (this.crouching)
-            return this.crouch
-        else
-            return this.normal;
-    },
-    jumpGauge: 0
-}
+var palyer;
 
 class AABB
 {
     constructor(x, y, w, h)
     {
-        this.minX = x;
-        this.minY = y;
-        this.maxX = x + w;
-        this.maxY = y + h;
+        this.x = x;
+        this.y = y;
+        this.X = x + w;
+        this.Y = y + h;
         this.width = w;
         this.height = h;
     }
 
     checkCollidePoint(px, py)
     {
-        if(px >= this.minX && px <= this.maxX && py >= this.minY && py <= this.maxY)
+        if (px >= this.x && px <= this.X && py >= this.y && py <= this.Y)
             return true;
+        else
+            return false;
     }
 
     checkCollideBox(aabb)
     {
-        return  this.checkCollidePoint(aabb.minX, aabb.minY) || 
-                this.checkCollidePoint(aabb.maxX, aabb.minY) || 
-                this.checkCollidePoint(aabb.minX, aabb.maxY) || 
-                this.checkCollidePoint(aabb.maxX, aabb.maxY);
+        return this.checkCollidePoint(aabb.x, aabb.y) ||
+            this.checkCollidePoint(aabb.X, aabb.y) ||
+            this.checkCollidePoint(aabb.x, aabb.Y) ||
+            this.checkCollidePoint(aabb.X, aabb.Y);
+    }
+}
+
+class Player
+{
+    constructor(x, y)
+    {
+        this.speed = 1;
+        this.crouching = false;
+        this.onGround = true;
+        this.x = x;
+        this.y = y;
+        this.ax = 0;
+        this.ay = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.size = 32;
+        this.aabb = new AABB(x, y, this.size, this.size);
+        this.jumpGauge = 0;
+    }
+
+    getDrawImage()
+    {
+        if (this.crouching)
+            return 'crouch';
+        else
+            return 'normal';
+    }
+
+    collideToLeft()
+    {
+        player.x = 0;
+        player.vx *= -1 * boundFriction;
+    }
+    collideToRight()
+    {
+        player.x = WIDTH - playerSize;
+        player.vx *= -1 * boundFriction;
+    }
+    collideToTop()
+    {
+
+    }
+    collideToBottom()
+    {
+        player.onGround = true;
+        player.y = 0;
+        player.vx = 0;
+        player.vy = 0;
+        player.ax = 0;
+        player.ay = 0;
     }
 }
 
@@ -84,13 +116,18 @@ function init()
 
     previousTime = new Date().getTime();
 
-    player.normal.src = "./normal.png";
-    player.normal.onload = function () { resourceLoaded++; };
-    player.crouch.src = "./crouch.png";
-    player.crouch.onload = function () { resourceLoaded++; };
+    images['normal'] = new Image();
+    images['crouch'] = new Image();
+
+    images['normal'].src = "./normal.png";
+    images['normal'].onload = function () { resourceLoaded++; };
+    images['crouch'].src = "./crouch.png";
+    images['crouch'].onload = function () { resourceLoaded++; };
 
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
+
+    player = new Player((WIDTH - 32) / 2.0, 0);
 }
 
 function keyDown(e)
@@ -132,23 +169,16 @@ function update(delta)
 
     if (player.x <= 0)
     {
-        player.x = 0;
-        player.vx *= -1 * boundFriction;
+        player.collideToLeft();
     }
-    if (player.x >= WIDTH - playerSize)
+    if (player.X >= WIDTH)
     {
-        player.x = WIDTH - playerSize;
-        player.vx *= -1 * boundFriction;
+        player.collideToRight();
     }
 
     if (player.y <= 0)
     {
-        player.onGround = true;
-        player.y = 0;
-        player.vx = 0;
-        player.vy = 0;
-        player.ax = 0;
-        player.ay = 0;
+        player.collideToBottom();
     }
 
     if (!player.onGround)
@@ -179,14 +209,16 @@ function render()
         return;
 
     gfx.clearRect(0, 0, WIDTH, HEIGHT);
-    gfx.drawImage(player.getDrawImage(), player.x, HEIGHT - playerSize - player.y, playerSize, playerSize);
+    gfx.drawImage(images[player.getDrawImage()], player.x, HEIGHT - player.size - player.y, player.size, player.size);
 
     drawAABB(new AABB(100, 100, 200, 50));
+
+    console.log(new AABB(100, 100, 200, 50).checkCollideBox(new AABB(300, 151, 100, 100)));
 }
 
 function drawAABB(aabb)
 {
-    drawBlock(aabb.minX, aabb.minY, aabb.width, aabb.height);
+    drawBlock(aabb.x, aabb.y, aabb.width, aabb.height);
 }
 
 function drawBlock(x, y, w, h)
