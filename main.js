@@ -145,27 +145,29 @@ class Player
         if (this.y + this.size >= HEIGHT)
             this.collideToTop(HEIGHT);
 
-        if (!this.onGround)
+        if (this.onGround)
+        {
+            if (keys[' '] && !this.crouching)
+                this.crouching = true;
+            if (keys[' '] && this.crouching)
+                this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
+
+            if (!keys[' '] && this.crouching)
+            {
+                if (keys['ArrowLeft']) this.vx -= sideJump;
+                if (keys['ArrowRight']) this.vx += sideJump;
+                this.vy = this.jumpGauge * JumpConst;
+                this.jumpGauge = 0;
+                this.onGround = false;
+                this.crouching = false;
+            }
+        }
+        else
+        {
             this.vy -= gravity;
-
-        if (this.onGround && keys[' '] && !this.crouching)
-            this.crouching = true;
-
-        if (this.onGround && keys[' '] && this.crouching)
-        {
-            this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
         }
 
-        if (this.onGround && !keys[' '] && this.crouching)
-        {
-            if (keys['ArrowLeft']) this.vx -= sideJump;
-            if (keys['ArrowRight']) this.vx += sideJump;
-            this.vy = this.jumpGauge * JumpConst;
-            this.jumpGauge = 0;
-            this.onGround = false;
-            this.crouching = false;
-        }
-
+        //Collision test
         var box = this.aabb();
 
         aabbs.forEach(aabb =>
