@@ -17,10 +17,10 @@ var images = [];
 var keys = [];
 var aabbs = [];
 
-const speed = 1.9;
+const speed = 2.7;
 const gravity = 0.19;
 const globalFriction = 0.996;
-const groundFriction = 0.83;
+const groundFriction = 0.88;
 const sideJump = 5.1;
 const boundFriction = 0.55;
 const JumpConst = 15.0;
@@ -259,11 +259,11 @@ function init()
     player = new Player((WIDTH - 32) / 2.0, 0);
 
     //Add Blocks
-    aabbs.push(new AABB(100, 100, 200, 40));
-    aabbs.push(new AABB(330, 230, 200, 40));
-    aabbs.push(new AABB(710, 410, 200, 40));
-    aabbs.push(new AABB(330, 660, 200, 40));
-    aabbs.push(new AABB(10, 620, 100, 40));
+    aabbs.push(new AABB(100, 100, 150, 34));
+    aabbs.push(new AABB(330, 230, 150, 34));
+    aabbs.push(new AABB(710, 410, 150, 34));
+    aabbs.push(new AABB(330, 660, 150, 34));
+    aabbs.push(new AABB(10, 620, 150, 34));
 }
 
 function keyDown(e)
