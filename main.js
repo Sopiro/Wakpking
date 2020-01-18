@@ -17,8 +17,10 @@ var images = [];
 var keys = [];
 var aabbs = [];
 
+const speed = 1.9;
 const gravity = 0.19;
-const friction = 0.996;
+const globalFriction = 0.996;
+const groundFriction = 0.83;
 const sideJump = 5.1;
 const boundFriction = 0.55;
 const JumpConst = 15.0;
@@ -69,13 +71,10 @@ class Player
 {
     constructor(x, y)
     {
-        this.speed = 1;
         this.crouching = false;
         this.onGround = true;
         this.x = x;
         this.y = y;
-        this.ax = 0;
-        this.ay = 0;
         this.vx = 0;
         this.vy = 0;
         this.size = 32;
@@ -119,80 +118,98 @@ class Player
         this.y = w;
         this.vx = 0;
         this.vy = 0;
-        this.ax = 0;
-        this.ay = 0;
     }
 
     update(delta)
     {
-        this.vx += this.ax;
-        this.vx *= friction;
+        this.vx *= globalFriction;
         this.x += this.vx;
 
-        this.vy += this.ay;
-        this.vy *= friction;
+        this.vy *= globalFriction;
         this.y += this.vy;
 
-        if (this.x <= 0)
-            this.collideToLeft(0);
-
-        if (this.x + this.size >= WIDTH)
-            this.collideToRight(WIDTH);
-
-        if (this.y <= 0)
-            this.collideToBottom(0);
-
-        if (this.y + this.size >= HEIGHT)
-            this.collideToTop(HEIGHT);
+        var moving = (this.vx * this.vx + this.vy * this.vy) != 0 ? true : false;
 
         if (this.onGround)
         {
+            this.vx *= groundFriction;
+
             if (keys[' '] && !this.crouching)
+            {
                 this.crouching = true;
+            }
+
             if (keys[' '] && this.crouching)
+            {
                 this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
+            }
+
+            if (keys['ArrowLeft'] && !this.crouching)
+            {
+                this.vx = -speed;
+            }
+            if (keys['ArrowRight'] && !this.crouching)
+            {
+                this.vx = speed;
+            }
 
             if (!keys[' '] && this.crouching)
             {
-                if (keys['ArrowLeft']) this.vx -= sideJump;
-                if (keys['ArrowRight']) this.vx += sideJump;
+                if (keys['ArrowLeft']) this.vx = -sideJump;
+                if (keys['ArrowRight']) this.vx = sideJump;
+
                 this.vy = this.jumpGauge * JumpConst;
                 this.jumpGauge = 0;
                 this.onGround = false;
                 this.crouching = false;
             }
         }
+
+        if (moving)
+            this.vy -= gravity;
+
+        //Collision test for world
+        if (this.x < 0)
+            this.collideToLeft(0);
+        else if (this.x + this.size > WIDTH)
+            this.collideToRight(WIDTH);
+        else if (this.y < 0)
+            this.collideToBottom(0);
+        else if (this.y + this.size > HEIGHT)
+            this.collideToTop(HEIGHT);
         else
         {
-            this.vy -= gravity;
-        }
+            //Collision test for box
+            var box = this.aabb();
 
-        //Collision test
-        var box = this.aabb();
-
-        aabbs.forEach(aabb =>
-        {
-            var r = aabb.checkCollideBox(box);
-            if (r.collide)
+            aabbs.forEach(aabb =>
             {
-                if ((r.lt || r.lb) && (!r.rt && !r.rb) && this.vx < 0)
+                var r = aabb.checkCollideBox(box);
+                if (r.collide)
                 {
-                    this.collideToLeft(aabb.X);
+                    if ((r.lt || r.lb) && (!r.rt && !r.rb) && this.vx < 0 && !this.onGround)
+                    {
+                        console.log("left");
+                        this.collideToLeft(aabb.X);
+                    }
+                    else if ((!r.lt && !r.lb) && (r.rt || r.rb) && this.vx > 0 && !this.onGround)
+                    {
+                        console.log("right");
+                        this.collideToRight(aabb.x);
+                    }
+                    else if (r.lb || r.rb && this.vy < 0)
+                    {
+                        console.log("bottom");
+                        this.collideToBottom(aabb.Y);
+                    }
+                    else if (r.lt || r.rt && this.vy > 0)
+                    {
+                        console.log("top");
+                        this.collideToTop(aabb.y);
+                    }
                 }
-                else if ((!r.lt && !r.lb) && (r.rt || r.rb) && this.vx > 0)
-                {
-                    this.collideToRight(aabb.x);
-                }
-                else if (r.lb || r.rb && this.vy < 0)
-                {
-                    this.collideToBottom(aabb.Y);
-                }
-                else if (r.lt || r.rt && this.vy > 0)
-                {
-                    this.collideToTop(aabb.y);
-                }
-            }
-        });
+            });
+        }
     }
 
     render()
