@@ -55,7 +55,8 @@ class AABB
         var rlt = this.checkCollidePoint(aabb.x, aabb.Y);
         var rrt = this.checkCollidePoint(aabb.X, aabb.Y);
 
-        var res = {
+        var res =
+        {
             collide: rlb || rrb || rlt || rrt,
             lb: rlb,
             rb: rrb,
@@ -187,25 +188,37 @@ class Player
                 var r = aabb.checkCollideBox(box);
                 if (r.collide)
                 {
-                    if ((r.lt || r.lb) && (!r.rt && !r.rb) && this.vx < 0 && !this.onGround)
+                    if (r.lb)
                     {
-                        console.log("left");
-                        this.collideToLeft(aabb.X);
+                        var bx = box.x - this.vx;
+                        if (bx > aabb.X)
+                            this.collideToLeft(aabb.X);
+                        else
+                            this.collideToBottom(aabb.Y);
                     }
-                    else if ((!r.lt && !r.lb) && (r.rt || r.rb) && this.vx > 0 && !this.onGround)
+                    else if (r.rb)
                     {
-                        console.log("right");
-                        this.collideToRight(aabb.x);
+                        var bx = box.X - this.vx;
+                        if (bx < aabb.x)
+                            this.collideToRight(aabb.x);
+                        else
+                            this.collideToBottom(aabb.Y);
                     }
-                    else if (r.lb || r.rb && this.vy < 0)
+                    else if (r.lt)
                     {
-                        console.log("bottom");
-                        this.collideToBottom(aabb.Y);
+                        var bx = box.x - this.vx;
+                        if (bx > aabb.X)
+                            this.collideToLeft(aabb.X);
+                        else
+                            this.collideToTop(aabb.y);
                     }
-                    else if (r.lt || r.rt && this.vy > 0)
+                    else if (r.rt)
                     {
-                        console.log("top");
-                        this.collideToTop(aabb.y);
+                        var bx = box.X - this.vx;
+                        if (bx < aabb.x)
+                            this.collideToRight(aabb.x);
+                        else
+                            this.collideToTop(aabb.y);
                     }
                 }
             });
