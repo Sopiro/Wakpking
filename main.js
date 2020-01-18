@@ -15,7 +15,7 @@ var resourceLoaded = 0;
 
 var images = [];
 var keys = [];
-var aabbs = [];
+var blocks = [];
 
 const speed = 2.7;
 const gravity = 0.19;
@@ -27,6 +27,7 @@ const JumpConst = 15.0;
 const chargingConst = 600.0;
 
 var palyer;
+var level = 0;
 
 class AABB
 {
@@ -65,6 +66,20 @@ class AABB
         };
 
         return res;
+    }
+}
+
+class Block
+{
+    constructor(level, aabb)
+    {
+        this.level = level;
+        this.aabb = aabb;
+    }
+
+    convert()
+    {
+        return new AABB(this.aabb.x, this.aabb.y + this.level * HEIGHT, this.aabb.width, this.aabb.height);
     }
 }
 
@@ -131,6 +146,9 @@ class Player
 
         var moving = (this.vx * this.vx + this.vy * this.vy) != 0 ? true : false;
 
+        if (moving)
+            this.vy -= gravity;
+
         if (this.onGround)
         {
             this.vx *= groundFriction;
@@ -166,8 +184,7 @@ class Player
             }
         }
 
-        if (moving)
-            this.vy -= gravity;
+        level = Math.trunc(this.y / HEIGHT);
 
         //Collision test for world
         if (this.x < 0)
@@ -176,16 +193,18 @@ class Player
             this.collideToRight(WIDTH);
         else if (this.y < 0)
             this.collideToBottom(0);
-        else if (this.y + this.size > HEIGHT)
-            this.collideToTop(HEIGHT);
         else
         {
             //Collision test for box
             var box = this.aabb();
 
-            aabbs.forEach(aabb =>
+            blocks.forEach(b =>
             {
-                var r = aabb.checkCollideBox(box);
+                if (b.level != level) return;
+
+                var r = b.convert().checkCollideBox(box);
+                var aabb = b.convert();
+
                 if (r.collide)
                 {
                     if (r.lb)
@@ -227,7 +246,7 @@ class Player
 
     render()
     {
-        gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y, this.size, this.size);
+        gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y + level * HEIGHT, this.size, this.size);
     }
 }
 
@@ -259,11 +278,15 @@ function init()
     player = new Player((WIDTH - 32) / 2.0, 0);
 
     //Add Blocks
-    aabbs.push(new AABB(100, 100, 150, 34));
-    aabbs.push(new AABB(330, 230, 150, 34));
-    aabbs.push(new AABB(710, 410, 150, 34));
-    aabbs.push(new AABB(330, 660, 150, 34));
-    aabbs.push(new AABB(10, 620, 150, 34));
+    blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
+    blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
+    blocks.push(new Block(0, new AABB(710, 410, 150, 34)));
+    blocks.push(new Block(0, new AABB(850, 410, 34, 390)));
+    blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
+    blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
+    blocks.push(new Block(0, new AABB(70, 780, 800, 34)));
+
+    blocks.push(new Block(1, new AABB(70, 0, 800, 34)));
 }
 
 function keyDown(e)
@@ -307,9 +330,11 @@ function render()
 
     player.render();
 
-    aabbs.forEach(function (aabb)
+    blocks.forEach(b =>
     {
-        drawAABB(aabb);
+        if (b.level != level) return;
+
+        drawAABB(b.aabb);
     });
 }
 
