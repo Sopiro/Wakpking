@@ -360,6 +360,7 @@ function init()
 {
     cvs = document.getElementById("cvs");
     gfx = cvs.getContext("2d");
+    gfx.font = "20px Georgia";
 
     // cvs.addEventListener('mousemove', function (evt)
     // {
@@ -452,11 +453,12 @@ function render()
         drawAABB(b.aabb);
     });
 
-    if (level == 2)
+    if (level == 0)
     {
-        gfx.font = "20px Georgia";
-        gfx.fillText("Goal!", 880, HEIGHT - 750);
+        gfx.fillText("Let's go up!", 550, HEIGHT - 80);
     }
+    if (level == 2)
+        gfx.fillText("Goal!", 880, HEIGHT - 750);
 }
 
 function drawAABB(aabb)
