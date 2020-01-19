@@ -13,8 +13,9 @@ var msPerFrame = 1000.0 / 144.0;
 const numResource = 2;
 var resourceLoaded = 0;
 
-var images = [];
-var keys = [];
+var images = {};
+var audios = {};
+var keys = {};
 var blocks = [];
 
 const speed = 2.7;
@@ -122,18 +123,21 @@ class Player
     {
         this.x = w;
         this.vx *= -1 * boundFriction;
+        audios.bounce.start();
     }
 
     collideToRight(w)
     {
         this.x = w - this.size;
         this.vx *= -1 * boundFriction;
+        audios.bounce.start();
     }
 
     collideToTop(w)
     {
         this.y = w - this.size;
         this.vy *= -1 * boundFriction;
+        audios.bounce.start();
     }
 
     collideToBottom(w)
@@ -142,6 +146,7 @@ class Player
         this.y = w;
         this.vx = 0;
         this.vy = 0;
+        audios.landing.start();
     }
 
     update(delta)
@@ -174,7 +179,7 @@ class Player
             {
                 this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
             }
-            else if (keys['ArrowLeft'] && !this.crouching)
+            else if (keys.ArrowLeft && !this.crouching)
             {
                 c = this.testCollide(-speed, 0);
                 if (!c.side)
@@ -182,7 +187,7 @@ class Player
                 else
                     this.vx = 0;
             }
-            else if (keys['ArrowRight'] && !this.crouching)
+            else if (keys.ArrowRight && !this.crouching)
             {
                 c = this.testCollide(speed, 0);
                 if (!c.side)
@@ -192,8 +197,9 @@ class Player
             }
             else if (!keys[' '] && this.crouching)
             {
-                if (keys['ArrowLeft']) this.vx = -sideJump;
-                else if (keys['ArrowRight']) this.vx = sideJump;
+                if (keys.ArrowLeft) this.vx = -sideJump;
+                else if (keys.ArrowRight) this.vx = sideJump;
+                audios.jump.start();
 
                 this.vy = this.jumpGauge * JumpConst;
                 this.jumpGauge = 0;
@@ -362,23 +368,49 @@ function init()
     gfx = cvs.getContext("2d");
     gfx.font = "20px Georgia";
 
-    // cvs.addEventListener('mousemove', function (evt)
-    // {
-    //     var mousePos = getMousePos(cvs, evt);
-    //     var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
-    //     console.log(message);
-    // }, false);
+    cvs.addEventListener('mousemove', function (evt)
+    {
+        var mousePos = getMousePos(cvs, evt);
+        var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
+        // console.log(message);
+    }, false);
 
     previousTime = new Date().getTime();
 
     //Images 
-    images['normal'] = new Image();
-    images['normal'].src = "./normal.png";
-    images['normal'].onload = function () { resourceLoaded++; };
+    images.normal = new Image();
+    images.normal.src = "./normal.png";
+    images.normal.onload = function () { resourceLoaded++; };
+    images.crouch = new Image();
+    images.crouch.src = "./crouch.png";
+    images.crouch.onload = function () { resourceLoaded++; };
 
-    images['crouch'] = new Image();
-    images['crouch'].src = "./crouch.png";
-    images['crouch'].onload = function () { resourceLoaded++; };
+    //Audios
+    audios.landing = new Audio();
+    audios.landing.src = "./landing.wav";
+    audios.bounce = new Audio();
+    audios.bounce.src = "./bounce.wav";
+    audios.jump = new Audio();
+    audios.jump.src = "./jump.wav";
+
+    audios.landing.start = function ()
+    {
+        audios.landing.pause();
+        audios.landing.currentTime = 0;
+        audios.landing.play();
+    };
+    audios.bounce.start = function ()
+    {
+        audios.bounce.pause();
+        audios.bounce.currentTime = 0;
+        audios.bounce.play();
+    };
+    audios.jump.start = function ()
+    {
+        audios.jump.pause();
+        audios.jump.currentTime = 0;
+        audios.jump.play();
+    };
 
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
@@ -471,4 +503,13 @@ function drawBlock(x, y, w, h)
     gfx.beginPath();
     gfx.rect(x, HEIGHT - y, w, -h);
     gfx.fill();
+}
+
+function getMousePos(canvas, evt)
+{
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
 }
