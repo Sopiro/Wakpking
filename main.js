@@ -148,22 +148,13 @@ class Player
     {
         this.vx *= globalFriction;
         this.vy *= globalFriction;
-        // if (Math.abs(this.vx) < 0.0001) this.vx = 0;
-        // if (Math.abs(this.vy) < 0.0001) this.vy = 0;
+        if (Math.abs(this.vx) < 0.0001) this.vx = 0;
+        if (Math.abs(this.vy) < 0.0001) this.vy = 0;
         this.x += this.vx;
         this.y += this.vy;
 
-        var c = this.testCollide(this.vx, this.vy - gravity);
-
-        if (!c.side)
-        {
-            // this.onGround = false;
-            this.vy -= gravity;
-        }
-        else
-        {
-            this.reponseCollide(c);
-        }
+        var c = this.testCollide(this.vx, this.vy);
+        if (c.side) this.reponseCollide(c);
 
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
@@ -176,25 +167,31 @@ class Player
             {
                 this.crouching = true;
             }
-
-            if (keys[' '] && this.crouching)
+            else if (keys[' '] && this.crouching)
             {
                 this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
             }
 
-            if (keys['ArrowLeft'] && !this.crouching)
+            else if (keys['ArrowLeft'] && !this.crouching)
             {
-                this.vx = -speed;
+                c = this.testCollide(-speed, 0);
+                if (!c.side)
+                    this.vx = -speed;
+                else
+                    this.vx = 0;
             }
-            if (keys['ArrowRight'] && !this.crouching)
+            else if (keys['ArrowRight'] && !this.crouching)
             {
-                this.vx = speed;
+                c = this.testCollide(speed, 0);
+                if (!c.side)
+                    this.vx = speed;
+                else
+                    this.vx = 0;
             }
-
-            if (!keys[' '] && this.crouching)
+            else if (!keys[' '] && this.crouching)
             {
                 if (keys['ArrowLeft']) this.vx = -sideJump;
-                if (keys['ArrowRight']) this.vx = sideJump;
+                else if (keys['ArrowRight']) this.vx = sideJump;
 
                 this.vy = this.jumpGauge * JumpConst;
                 this.jumpGauge = 0;
@@ -202,6 +199,9 @@ class Player
                 this.crouching = false;
             }
         }
+
+        c = this.testCollide(0, -gravity);
+        if (!c.side)  this.vy -= gravity;
     }
 
     testCollide(nvx, nvy)
