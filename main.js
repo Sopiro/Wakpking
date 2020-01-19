@@ -144,11 +144,6 @@ class Player
         this.vy *= globalFriction;
         this.y += this.vy;
 
-        var moving = (this.vx * this.vx + this.vy * this.vy) != 0 ? true : false;
-
-        if (moving)
-            this.vy -= gravity;
-
         if (this.onGround)
         {
             this.vx *= groundFriction;
@@ -184,30 +179,45 @@ class Player
             }
         }
 
+        var moving = (this.vx * this.vx + this.vy * this.vy) != 0 ? true : false;
+
+        if (moving)
+        {
+            this.vy -= gravity;
+        }
+
         level = Math.trunc(this.y / HEIGHT);
 
+        //Collision test for box
+        var box = this.aabb();
+
         //Collision test for world
-        if (this.x < 0)
+        if (box.x < 0)
             this.collideToLeft(0);
-        else if (this.x + this.size > WIDTH)
+        else if (box.X > WIDTH)
             this.collideToRight(WIDTH);
-        else if (this.y < 0)
+        else if (box.y < 0)
             this.collideToBottom(0);
         else
         {
-            //Collision test for box
-            var box = this.aabb();
-
             blocks.forEach(b =>
             {
                 if (b.level != level) return;
 
-                var r = b.convert().checkCollideBox(box);
                 var aabb = b.convert();
+                var r = aabb.checkCollideBox(box);
 
                 if (r.collide)
                 {
-                    if (r.lb)
+                    if (r.lb && r.lt)
+                        this.collideToLeft(aabb.X);
+                    else if (r.rb && r.rt)
+                        this.collideToRight(aabb.x);
+                    else if (r.lb && r.rb)
+                        this.collideToBottom(aabb.Y);
+                    else if (r.lt && r.rt)
+                        this.collideToTop(aabb.y);
+                    else if (r.lb)
                     {
                         var bx = box.x - this.vx;
                         if (bx > aabb.X)
@@ -280,13 +290,13 @@ function init()
     //Add Blocks
     blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
     blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
-    blocks.push(new Block(0, new AABB(710, 410, 150, 34)));
-    blocks.push(new Block(0, new AABB(850, 410, 34, 390)));
+    blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
+    blocks.push(new Block(0, new AABB(826, 410, 34, 370)));
     blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
     blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
-    blocks.push(new Block(0, new AABB(70, 780, 800, 34)));
+    blocks.push(new Block(0, new AABB(70, 780, 790, 34)));
 
-    blocks.push(new Block(1, new AABB(70, 0, 800, 34)));
+    blocks.push(new Block(1, new AABB(70, 0, 790, 34)));
 }
 
 function keyDown(e)
