@@ -178,16 +178,18 @@ class Player
                 this.crouching = false;
             }
         }
-
-        var moving = (this.vx * this.vx + this.vy * this.vy) != 0 ? true : false;
-
-        if (moving)
+        else
         {
             this.vy -= gravity;
         }
 
         level = Math.trunc(this.y / HEIGHT);
 
+        this.processCollision();
+    }
+
+    processCollision()
+    {
         //Collision test for box
         var box = this.aabb();
 
@@ -200,9 +202,9 @@ class Player
             this.collideToBottom(0);
         else
         {
-            blocks.forEach(b =>
+            for (var b of blocks)
             {
-                if (b.level != level) return;
+                if (b.level != level) continue;
 
                 var aabb = b.convert();
                 var r = aabb.checkCollideBox(box);
@@ -249,8 +251,10 @@ class Player
                         else
                             this.collideToTop(aabb.y);
                     }
+
+                    return;
                 }
-            });
+            }
         }
     }
 
