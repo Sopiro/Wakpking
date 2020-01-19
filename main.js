@@ -67,6 +67,14 @@ class AABB
 
         return res;
     }
+
+    move(dx, dy)
+    {
+        this.x += dx;
+        this.y += dy;
+        this.X += dx;
+        this.Y += dy;
+    }
 }
 
 class Block
@@ -135,17 +143,31 @@ class Player
         this.vx = 0;
         this.vy = 0;
     }
-    
+
     update(delta)
     {
         this.vx *= globalFriction;
-        this.x += this.vx;
         this.vy *= globalFriction;
+        // if (Math.abs(this.vx) < 0.0001) this.vx = 0;
+        // if (Math.abs(this.vy) < 0.0001) this.vy = 0;
+        this.x += this.vx;
         this.y += this.vy;
+
+        var c = this.testCollide(this.vx, this.vy - gravity);
+
+        if (!c.side)
+        {
+            // this.onGround = false;
+            this.vy -= gravity;
+        }
+        else
+        {
+            this.reponseCollide(c);
+        }
 
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
-        
+
         if (this.onGround)
         {
             this.vx *= groundFriction;
@@ -180,26 +202,31 @@ class Player
                 this.crouching = false;
             }
         }
-        else
-        {
-            this.vy -= gravity;
-        }
-
-        this.processCollision();
     }
 
-    processCollision()
+    testCollide(nvx, nvy)
     {
-        //Collision test for box
-        var box = this.aabb();
+        var side;
+        var set;
 
-        //Collision test for world
+        var box = this.aabb();
+        box.move(nvx, nvy);
+
         if (box.x < 0)
-            this.collideToLeft(0);
+        {
+            side = 'left';
+            set = 0;
+        }
         else if (box.X > WIDTH)
-            this.collideToRight(WIDTH);
+        {
+            side = 'right';
+            set = WIDTH;
+        }
         else if (box.y < 0)
-            this.collideToBottom(0);
+        {
+            side = 'bottom';
+            set = 0;
+        }
         else
         {
             for (var b of blocks)
@@ -212,49 +239,104 @@ class Player
                 if (r.collide)
                 {
                     if (r.lb && r.lt)
-                        this.collideToLeft(aabb.X);
+                    {
+                        side = 'left';
+                        set = aabb.X;
+                    }
                     else if (r.rb && r.rt)
-                        this.collideToRight(aabb.x);
+                    {
+                        side = 'right';
+                        set = aabb.x;
+                    }
                     else if (r.lb && r.rb)
-                        this.collideToBottom(aabb.Y);
+                    {
+                        side = 'bottom';
+                        set = aabb.Y;
+                    }
                     else if (r.lt && r.rt)
-                        this.collideToTop(aabb.y);
+                    {
+                        side = 'top';
+                        set = aabb.y;
+                    }
                     else if (r.lb)
                     {
                         var bx = box.x - this.vx;
                         if (bx > aabb.X)
-                            this.collideToLeft(aabb.X);
+                        {
+                            side = 'left';
+                            set = aabb.X;
+                        }
                         else
-                            this.collideToBottom(aabb.Y);
+                        {
+                            side = 'bottom';
+                            set = aabb.Y;
+                        }
                     }
                     else if (r.rb)
                     {
                         var bx = box.X - this.vx;
                         if (bx < aabb.x)
-                            this.collideToRight(aabb.x);
+                        {
+                            side = 'right';
+                            set = aabb.x;
+                        }
                         else
-                            this.collideToBottom(aabb.Y);
+                        {
+                            side = 'bottom';
+                            set = aabb.Y;
+                        }
                     }
                     else if (r.lt)
                     {
                         var bx = box.x - this.vx;
                         if (bx > aabb.X)
-                            this.collideToLeft(aabb.X);
+                        {
+                            side = 'left';
+                            set = aabb.X;
+                        }
                         else
-                            this.collideToTop(aabb.y);
+                        {
+                            side = 'top';
+                            set = aabb.y;
+                        }
                     }
                     else if (r.rt)
                     {
                         var bx = box.X - this.vx;
                         if (bx < aabb.x)
-                            this.collideToRight(aabb.x);
+                        {
+                            side = 'right';
+                            set = aabb.x;
+                        }
                         else
-                            this.collideToTop(aabb.y);
+                        {
+                            side = 'top';
+                            set = aabb.y;
+                        }
                     }
-
-                    return;
                 }
             }
+        }
+
+        return { side, set };
+    }
+
+    reponseCollide(c)
+    {
+        switch (c.side)
+        {
+            case 'left':
+                this.collideToLeft(c.set);
+                break;
+            case 'right':
+                this.collideToRight(c.set);
+                break;
+            case 'bottom':
+                this.collideToBottom(c.set);
+                break;
+            case 'top':
+                this.collideToTop(c.set);
+                break;
         }
     }
 
