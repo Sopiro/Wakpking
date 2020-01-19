@@ -361,11 +361,12 @@ function init()
     cvs = document.getElementById("cvs");
     gfx = cvs.getContext("2d");
 
-    cvs.addEventListener('mousemove', function(evt) {
-        var mousePos = getMousePos(cvs, evt);
-        var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
-        console.log(message);
-      }, false);
+    // cvs.addEventListener('mousemove', function (evt)
+    // {
+    //     var mousePos = getMousePos(cvs, evt);
+    //     var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
+    //     console.log(message);
+    // }, false);
 
     previousTime = new Date().getTime();
 
@@ -381,8 +382,8 @@ function init()
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
 
-    // player = new Player((WIDTH - 32) / 2.0, 0);
-    player = new Player(900, 800 * 2 + 700);
+    player = new Player((WIDTH - 32) / 2.0, 0);
+    // player = new Player(900, 800 * 2 + 700);
 
     //Add Blocks
     blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
@@ -450,6 +451,12 @@ function render()
 
         drawAABB(b.aabb);
     });
+
+    if (level == 2)
+    {
+        gfx.font = "20px Georgia";
+        gfx.fillText("Goal!", 880, HEIGHT - 750);
+    }
 }
 
 function drawAABB(aabb)
@@ -462,12 +469,4 @@ function drawBlock(x, y, w, h)
     gfx.beginPath();
     gfx.rect(x, HEIGHT - y, w, -h);
     gfx.fill();
-}
-
-function getMousePos(cvs, evt) {
-    var rect = cvs.getBoundingClientRect();
-    return {
-      x: evt.clientX - rect.left,
-      y: evt.clientY - rect.top
-    };
 }
