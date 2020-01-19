@@ -135,15 +135,17 @@ class Player
         this.vx = 0;
         this.vy = 0;
     }
-
+    
     update(delta)
     {
         this.vx *= globalFriction;
         this.x += this.vx;
-
         this.vy *= globalFriction;
         this.y += this.vy;
 
+        //Calculate current level
+        level = Math.trunc(this.y / HEIGHT);
+        
         if (this.onGround)
         {
             this.vx *= groundFriction;
@@ -182,8 +184,6 @@ class Player
         {
             this.vy -= gravity;
         }
-
-        level = Math.trunc(this.y / HEIGHT);
 
         this.processCollision();
     }
