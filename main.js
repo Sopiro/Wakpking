@@ -159,6 +159,9 @@ class Player
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
 
+        var moving = this.vx * this.vx + this.vy + this.vy;
+        var falling = this.vy < 0 ? true : false;
+
         if (this.onGround)
         {
             this.vx *= groundFriction;
@@ -171,7 +174,6 @@ class Player
             {
                 this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
             }
-
             else if (keys['ArrowLeft'] && !this.crouching)
             {
                 c = this.testCollide(-speed, 0);
@@ -200,8 +202,10 @@ class Player
             }
         }
 
+        //Apply gravity
         c = this.testCollide(0, -gravity);
-        if (!c.side)  this.vy -= gravity;
+        if (!c.side) this.vy -= gravity;
+
     }
 
     testCollide(nvx, nvy)
@@ -357,6 +361,12 @@ function init()
     cvs = document.getElementById("cvs");
     gfx = cvs.getContext("2d");
 
+    cvs.addEventListener('mousemove', function(evt) {
+        var mousePos = getMousePos(cvs, evt);
+        var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
+        console.log(message);
+      }, false);
+
     previousTime = new Date().getTime();
 
     //Images 
@@ -371,18 +381,26 @@ function init()
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
 
-    player = new Player((WIDTH - 32) / 2.0, 0);
+    // player = new Player((WIDTH - 32) / 2.0, 0);
+    player = new Player(900, 800 * 2 + 700);
 
     //Add Blocks
     blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
     blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
     blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
-    blocks.push(new Block(0, new AABB(826, 410, 34, 370)));
     blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
     blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
-    blocks.push(new Block(0, new AABB(70, 780, 790, 34)));
 
-    blocks.push(new Block(1, new AABB(70, 0, 790, 34)));
+    blocks.push(new Block(1, new AABB(200, 100, 34, 200)));
+    blocks.push(new Block(1, new AABB(0, 200, 34, 34)));
+    blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
+    blocks.push(new Block(1, new AABB(860, 200, 60, 34)));
+    blocks.push(new Block(1, new AABB(670, 570, 180, 90)));
+
+    blocks.push(new Block(2, new AABB(130, 10, 100, 45)));
+    blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
+    blocks.push(new Block(2, new AABB(580, 480, 50, 50)));
+    blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
 }
 
 function keyDown(e)
@@ -444,4 +462,12 @@ function drawBlock(x, y, w, h)
     gfx.beginPath();
     gfx.rect(x, HEIGHT - y, w, -h);
     gfx.fill();
+}
+
+function getMousePos(cvs, evt) {
+    var rect = cvs.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
 }
