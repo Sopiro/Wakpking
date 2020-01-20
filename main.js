@@ -388,10 +388,13 @@ function init()
     //Audios
     audios.landing = new Audio();
     audios.landing.src = "./landing.wav";
+    audios.landing.volume = 0.4;
     audios.bounce = new Audio();
     audios.bounce.src = "./bounce.wav";
+    audios.bounce.volume = 0.4;
     audios.jump = new Audio();
     audios.jump.src = "./jump.wav";
+    audios.jump.volume = 0.4;
 
     audios.landing.start = function ()
     {
