@@ -32,6 +32,33 @@ const chargingConst = 600.0;
 let palyer;
 let level = 0;
 
+class Vector
+{
+    constructor(x, y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+
+    normalize()
+    {
+        let len = this.getLength();
+
+        this.x /= len;
+        this.y /= len;
+    }
+
+    getLength()
+    {
+        return Math.sqrt(this.x * this.x + this.y + this.y);
+    }
+
+    dot(v)
+    {
+        return this.x * v.x + this.y + v.y;
+    }
+}
+
 class Wall
 {
     constructor(level, x0, y0, wx, wy)
@@ -52,6 +79,22 @@ class Wall
         let z3 = (bx - ax) * (this.y1 - by) - (by - ay) * (this.x1 - bx);
 
         return (z0 * z1) < 0 && (z2 * z3) < 0;
+    }
+
+    getNormal()
+    {
+        let vx = this.y1 - this.y0;
+        let vy = this.x0 - this.x1;
+
+        let len = Math.sqrt(vx * vx + vy * vy);
+
+        let res =
+        {
+            x: vx / len,
+            y: vy / len
+        };
+
+        return res;
     }
 }
 
@@ -186,10 +229,12 @@ class Player
         audios.landing.start();
     }
 
-    collideToWall(w)
+    collideToWall(ref)
     {
-        this.vx *= -1;
-        this.vy *= -1;
+        // console.log(this.vx, this.vy, ref);
+        
+        this.vx = ref.x;
+        this.vy = ref.y;
     }
 
     update(delta)
@@ -383,7 +428,18 @@ class Player
                     side = 'wall';
                     set = 0;
 
-                    return { side, set };
+                    let n = w.getNormal();
+
+                    let ref =
+                    {
+                        x : nvx - 2 * n.x * (nvx * n.x + nvy * n.y),
+                        y : nvy - 2 * n.y * (nvx * n.x + nvy * n.y)
+                    }
+
+                    let rv = new Vector(ref.x, ref.y);
+                    // rv.normalize();
+
+                    return { side, rv };
                 }
             }
         }
@@ -408,7 +464,7 @@ class Player
                 this.collideToTop(c.set);
                 break;
             case 'wall':
-                this.collideToWall(0);
+                this.collideToWall(c.rv);
                 break;
 
         }
