@@ -25,7 +25,7 @@ const gravity = 0.19;
 const globalFriction = 0.996;
 const groundFriction = 0.88;
 const sideJump = 5.1;
-const boundFriction = 0.55;
+const boundFriction = 0.66;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
@@ -68,6 +68,17 @@ class Wall
         this.y0 = y0;
         this.x1 = x0 + wx;
         this.y1 = y0 + wy;
+    }
+
+    checkCollideAABB(aabb, vx, vy)
+    {
+        let res =
+            this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ||
+            this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ||
+            this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ||
+            this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy);
+
+        return res;
     }
 
     checkCollide(ax, ay, bx, by)
@@ -231,10 +242,9 @@ class Player
 
     collideToWall(ref)
     {
-        // console.log(this.vx, this.vy, ref);
-        
-        this.vx = ref.x;
-        this.vy = ref.y;
+        this.vx = ref.x * boundFriction;
+        this.vy = ref.y * boundFriction;
+        audios.bounce.start();
     }
 
     update(delta)
@@ -299,7 +309,6 @@ class Player
         //Apply gravity
         c = this.testCollide(0, -gravity);
         if (!c.side) this.vy -= gravity;
-
     }
 
     testCollide(nvx, nvy)
@@ -421,23 +430,19 @@ class Player
             {
                 if (w.level != level) continue;
 
-                let cp = this.getCenter();
-
-                if (w.checkCollide(cp.x, cp.y, cp.x + nvx, cp.y + nvy))
+                if (w.checkCollideAABB(box, nvx, nvy))
                 {
                     side = 'wall';
-                    set = 0;
 
                     let n = w.getNormal();
 
                     let ref =
                     {
-                        x : nvx - 2 * n.x * (nvx * n.x + nvy * n.y),
-                        y : nvy - 2 * n.y * (nvx * n.x + nvy * n.y)
+                        x: nvx - 2 * n.x * (nvx * n.x + nvy * n.y),
+                        y: nvy - 2 * n.y * (nvx * n.x + nvy * n.y)
                     }
 
                     let rv = new Vector(ref.x, ref.y);
-                    // rv.normalize();
 
                     return { side, rv };
                 }
@@ -560,7 +565,7 @@ function init()
     blocks.push(new Block(2, new AABB(580, 480, 50, 50)));
     blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
 
-    walls.push(new Wall(0, 700, 100, 100, 100));
+    walls.push(new Wall(0, 700, 0, 300, 300));
 }
 
 function keyDown(e)
