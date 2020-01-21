@@ -1,22 +1,24 @@
-var cvs;
-var gfx;
+let cvs;
+let gfx;
 
 const WIDTH = 1000;
 const HEIGHT = 800;
+const volume = 0.3;
 
-var d = new Date();
-var previousTime = 0;
-var currentTime = 0;
-var passedTime = 0;
-var msPerFrame = 1000.0 / 144.0;
+let d = new Date();
+let previousTime = 0;
+let currentTime = 0;
+let passedTime = 0;
+let msPerFrame = 1000.0 / 144.0;
 
 const numResource = 2;
-var resourceLoaded = 0;
+let resourceLoaded = 0;
 
-var images = {};
-var audios = {};
-var keys = {};
-var blocks = [];
+let images = {};
+let audios = {};
+let keys = {};
+let blocks = [];
+let walls = [];
 
 const speed = 2.7;
 const gravity = 0.19;
@@ -27,8 +29,31 @@ const boundFriction = 0.55;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
-var palyer;
-var level = 0;
+let palyer;
+let level = 0;
+
+class Wall
+{
+    constructor(level, x0, y0, wx, wy)
+    {
+        this.level = level;
+        this.x0 = x0;
+        this.y0 = y0;
+        this.x1 = x0 + wx;
+        this.y1 = y0 + wy;
+    }
+
+    checkCollide(ax, ay, bx, by)
+    {
+        let z0 = (this.x1 - this.x0) * (ay - this.y0) - (this.y1 - this.y0) * (ax - this.x0);
+        let z1 = (this.x1 - this.x0) * (by - this.y1) - (this.y1 - this.y0) * (bx - this.x1);
+
+        let z2 = (bx - ax) * (this.y0 - ay) - (by - ay) * (this.x0 - ax);
+        let z3 = (bx - ax) * (this.y1 - by) - (by - ay) * (this.x1 - bx);
+
+        return (z0 * z1) < 0 && (z2 * z3) < 0;
+    }
+}
 
 class AABB
 {
@@ -52,12 +77,12 @@ class AABB
 
     checkCollideBox(aabb)
     {
-        var rlb = this.checkCollidePoint(aabb.x, aabb.y);
-        var rrb = this.checkCollidePoint(aabb.X, aabb.y);
-        var rlt = this.checkCollidePoint(aabb.x, aabb.Y);
-        var rrt = this.checkCollidePoint(aabb.X, aabb.Y);
+        let rlb = this.checkCollidePoint(aabb.x, aabb.y);
+        let rrb = this.checkCollidePoint(aabb.X, aabb.y);
+        let rlt = this.checkCollidePoint(aabb.x, aabb.Y);
+        let rrt = this.checkCollidePoint(aabb.X, aabb.Y);
 
-        var res =
+        let res =
         {
             collide: rlb || rrb || rlt || rrt,
             lb: rlb,
@@ -103,12 +128,24 @@ class Player
         this.vx = 0;
         this.vy = 0;
         this.size = 32;
+        this.radius = this.size / 2.0 * 1.414;
         this.jumpGauge = 0;
     }
 
     aabb()
     {
         return new AABB(this.x, this.y, this.size, this.size);
+    }
+
+    getCenter()
+    {
+        let res =
+        {
+            x: this.x + this.size / 2,
+            y: this.y + this.size / 2
+        }
+
+        return res;
     }
 
     getDrawImage()
@@ -149,6 +186,12 @@ class Player
         audios.landing.start();
     }
 
+    collideToWall(w)
+    {
+        this.vx *= -1;
+        this.vy *= -1;
+    }
+
     update(delta)
     {
         this.vx *= globalFriction;
@@ -158,14 +201,14 @@ class Player
         this.x += this.vx;
         this.y += this.vy;
 
-        var c = this.testCollide(this.vx, this.vy);
+        let c = this.testCollide(this.vx, this.vy);
         if (c.side) this.reponseCollide(c);
 
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
 
-        var moving = this.vx * this.vx + this.vy + this.vy;
-        var falling = this.vy < 0 ? true : false;
+        let moving = this.vx * this.vx + this.vy + this.vy;
+        let falling = this.vy < 0 ? true : false;
 
         if (this.onGround)
         {
@@ -216,10 +259,10 @@ class Player
 
     testCollide(nvx, nvy)
     {
-        var side;
-        var set;
+        let side;
+        let set;
 
-        var box = this.aabb();
+        let box = this.aabb();
         box.move(nvx, nvy);
 
         if (box.x < 0)
@@ -239,12 +282,12 @@ class Player
         }
         else
         {
-            for (var b of blocks)
+            for (let b of blocks)
             {
                 if (b.level != level) continue;
 
-                var aabb = b.convert();
-                var r = aabb.checkCollideBox(box);
+                let aabb = b.convert();
+                let r = aabb.checkCollideBox(box);
 
                 if (r.collide)
                 {
@@ -270,7 +313,7 @@ class Player
                     }
                     else if (r.lb)
                     {
-                        var bx = box.x - this.vx;
+                        let bx = box.x - this.vx;
                         if (bx > aabb.X)
                         {
                             side = 'left';
@@ -284,7 +327,7 @@ class Player
                     }
                     else if (r.rb)
                     {
-                        var bx = box.X - this.vx;
+                        let bx = box.X - this.vx;
                         if (bx < aabb.x)
                         {
                             side = 'right';
@@ -298,7 +341,7 @@ class Player
                     }
                     else if (r.lt)
                     {
-                        var bx = box.x - this.vx;
+                        let bx = box.x - this.vx;
                         if (bx > aabb.X)
                         {
                             side = 'left';
@@ -312,7 +355,7 @@ class Player
                     }
                     else if (r.rt)
                     {
-                        var bx = box.X - this.vx;
+                        let bx = box.X - this.vx;
                         if (bx < aabb.x)
                         {
                             side = 'right';
@@ -324,6 +367,23 @@ class Player
                             set = aabb.y;
                         }
                     }
+
+                    return { side, set };
+                }
+            }
+
+            for (let w of walls)
+            {
+                if (w.level != level) continue;
+
+                let cp = this.getCenter();
+
+                if (w.checkCollide(cp.x, cp.y, cp.x + nvx, cp.y + nvy))
+                {
+                    side = 'wall';
+                    set = 0;
+
+                    return { side, set };
                 }
             }
         }
@@ -347,6 +407,10 @@ class Player
             case 'top':
                 this.collideToTop(c.set);
                 break;
+            case 'wall':
+                this.collideToWall(0);
+                break;
+
         }
     }
 
@@ -367,11 +431,12 @@ function init()
     cvs = document.getElementById("cvs");
     gfx = cvs.getContext("2d");
     gfx.font = "20px Georgia";
+    gfx.lineWidth = 2;
 
     cvs.addEventListener('mousemove', function (evt)
     {
-        var mousePos = getMousePos(cvs, evt);
-        var message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
+        let mousePos = getMousePos(cvs, evt);
+        let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
         // console.log(message);
     }, false);
 
@@ -388,13 +453,13 @@ function init()
     //Audios
     audios.landing = new Audio();
     audios.landing.src = "./landing.wav";
-    audios.landing.volume = 0.4;
+    audios.landing.volume = volume;
     audios.bounce = new Audio();
     audios.bounce.src = "./bounce.wav";
-    audios.bounce.volume = 0.4;
+    audios.bounce.volume = volume;
     audios.jump = new Audio();
-    audios.jump.src = "./jump.wav";
-    audios.jump.volume = 0.4;
+    audios.jump.src = "./jump2.wav";
+    audios.jump.volume = volume;
 
     audios.landing.start = function ()
     {
@@ -438,6 +503,8 @@ function init()
     blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
     blocks.push(new Block(2, new AABB(580, 480, 50, 50)));
     blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
+
+    walls.push(new Wall(0, 700, 100, 100, 100));
 }
 
 function keyDown(e)
@@ -453,7 +520,7 @@ function keyUp(e)
 
 function run(time)
 {
-    var currentTime = new Date().getTime();
+    let currentTime = new Date().getTime();
     passedTime += currentTime - previousTime;
     previousTime = currentTime;
 
@@ -488,12 +555,27 @@ function render()
         drawAABB(b.aabb);
     });
 
+    walls.forEach(w =>
+    {
+        if (w.level != level) return;
+
+        drawWall(w);
+    });
+
     if (level == 0)
     {
         gfx.fillText("Let's go up!", 550, HEIGHT - 80);
     }
     if (level == 2)
         gfx.fillText("Goal!", 880, HEIGHT - 750);
+}
+
+function drawWall(wall)
+{
+    gfx.beginPath();
+    gfx.moveTo(wall.x0, HEIGHT - wall.y0);
+    gfx.lineTo(wall.x1, HEIGHT - wall.y1);
+    gfx.stroke();
 }
 
 function drawAABB(aabb)
@@ -510,7 +592,7 @@ function drawBlock(x, y, w, h)
 
 function getMousePos(canvas, evt)
 {
-    var rect = canvas.getBoundingClientRect();
+    let rect = canvas.getBoundingClientRect();
     return {
         x: evt.clientX - rect.left,
         y: evt.clientY - rect.top
