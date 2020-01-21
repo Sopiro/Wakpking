@@ -50,12 +50,37 @@ class Vector
 
     getLength()
     {
-        return Math.sqrt(this.x * this.x + this.y + this.y);
+        return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
     dot(v)
     {
-        return this.x * v.x + this.y + v.y;
+        return this.x * v.x + this.y * v.y;
+    }
+
+    cross(v)
+    {
+        return this.y * v.x - this.x * v.y;
+    }
+
+    add(v)
+    {
+        return new Vector(this.x + v.x, this.y + v.y);
+    }
+
+    sub(v)
+    {
+        return new Vector(this.x - v.x, this.y - v.y);
+    }
+
+    div(v)
+    {
+        return new Vector(this.x / v, this.y / v);
+    }
+
+    mul(v)
+    {
+        return new Vector(this.x * v, this.y * v);
     }
 }
 
@@ -72,11 +97,10 @@ class Wall
 
     checkCollideAABB(aabb, vx, vy)
     {
-        let res =
-            this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ||
-            this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ||
-            this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ||
-            this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy);
+        let res = this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? 'lb' :
+            this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? 'rb' :
+                this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? 'lt' :
+                    this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? 'rt' : undefined;
 
         return res;
     }
@@ -94,16 +118,8 @@ class Wall
 
     getNormal()
     {
-        let vx = this.y1 - this.y0;
-        let vy = this.x0 - this.x1;
-
-        let len = Math.sqrt(vx * vx + vy * vy);
-
-        let res =
-        {
-            x: vx / len,
-            y: vy / len
-        };
+        let res = new Vector(this.y1 - this.y0, this.x0 - this.x1);
+        res.normalize();
 
         return res;
     }
@@ -430,21 +446,18 @@ class Player
             {
                 if (w.level != level) continue;
 
-                if (w.checkCollideAABB(box, nvx, nvy))
+                let r = w.checkCollideAABB(box, nvx, nvy);
+
+                if (r != undefined)
                 {
                     side = 'wall';
 
                     let n = w.getNormal();
 
-                    let ref =
-                    {
-                        x: nvx - 2 * n.x * (nvx * n.x + nvy * n.y),
-                        y: nvy - 2 * n.y * (nvx * n.x + nvy * n.y)
-                    }
+                    let nv = new Vector(nvx, nvy);
+                    let ref = nv.sub(n.mul(2).mul(nv.dot(n)));
 
-                    let rv = new Vector(ref.x, ref.y);
-
-                    return { side, rv };
+                    return { side, ref };
                 }
             }
         }
@@ -469,7 +482,7 @@ class Player
                 this.collideToTop(c.set);
                 break;
             case 'wall':
-                this.collideToWall(c.rv);
+                this.collideToWall(c.ref);
                 break;
 
         }
@@ -658,4 +671,12 @@ function getMousePos(canvas, evt)
         x: evt.clientX - rect.left,
         y: evt.clientY - rect.top
     };
+}
+
+function getIntersect(x1, y1, x2, y2, x3, y3, x4, y4)
+{
+    let x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+    let y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+    return new Vector(x, y);
 }
