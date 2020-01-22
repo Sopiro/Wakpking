@@ -103,20 +103,20 @@ class Wall
     checkCollideAABB(aabb, vx, vy)
     {
         let collide =
-            this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? new Vector(aabb.x, aabb.y) :
-                this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.y) :
-                    this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? new Vector(aabb.x, aabb.Y) :
-                        this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.X) : undefined;
+            aabb.checkCollidePoint(this.x0, this.y0) ? new Vector(this.x0, this.y0) :
+                aabb.checkCollidePoint(this.x1, this.y1) ? new Vector(this.x1, this.y1) : undefined;
 
         if (collide != undefined)
-            return { collide, endPoint: false };
+            return { collide, endPoint: true };
         else
         {
             collide =
-                aabb.checkCollidePoint(this.x0, this.y0) ? new Vector(this.x0, this.y0) :
-                    aabb.checkCollidePoint(this.x1, this.y1) ? new Vector(this.x1, this.y1) : undefined;
+                this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? new Vector(aabb.x, aabb.y) :
+                    this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.y) :
+                        this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? new Vector(aabb.x, aabb.Y) :
+                            this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.X) : undefined;
 
-            return { collide, endPoint: collide ? true : false }
+            return { collide, endPoint: false }
         }
     }
 
@@ -278,10 +278,12 @@ class Player
         this.vx = r.x;
         this.vy = r.y;
         audios.bounce.start();
+        // this.onGround = false;
     }
 
     update(delta)
     {
+        //Apply previous acceleration
         this.vx *= globalFriction;
         this.vy *= globalFriction;
         if (Math.abs(this.vx) < 0.0001) this.vx = 0;
@@ -289,14 +291,13 @@ class Player
         this.x += this.vx;
         this.y += this.vy;
 
-        let c = this.testCollide(this.vx, this.vy);
-        if (c.side) this.reponseCollide(c);
+        let c;
 
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
 
-        let moving = this.vx * this.vx + this.vy + this.vy;
-        let falling = this.vy < 0 ? true : false;
+        // let moving = this.vx * this.vx + this.vy + this.vy;
+        // let falling = this.vy < 0 ? true : false;
 
         if (this.onGround)
         {
@@ -313,7 +314,8 @@ class Player
             else if (keys.ArrowLeft && !this.crouching)
             {
                 c = this.testCollide(-speed, 0);
-                if (!c.side)
+
+                if (c.side == undefined)
                     this.vx = -speed;
                 else
                     this.vx = 0;
@@ -322,7 +324,7 @@ class Player
             {
                 c = this.testCollide(speed, 0);
 
-                if (!c.side)
+                if (c.side == undefined)
                     this.vx = speed;
                 else
                     this.vx = 0;
@@ -342,9 +344,14 @@ class Player
 
         //Apply gravity
         c = this.testCollide(0, -gravity);
-        if (!c.side)
-        {
+        if (c.side == undefined)
             this.vy -= gravity;
+
+        //Test if current acceleration make collision happen or not 
+        c = this.testCollide(this.vx, this.vy);
+        if (c.side != undefined)
+        {
+            this.reponseCollide(c);
         }
     }
 
@@ -473,13 +480,13 @@ class Player
                 {
                     side = 'wall';
                     let nv = new Vector(nvx, nvy);
-
                     let n;
 
                     if (!r.endPoint)
                     {
                         let hitPoint = getIntersect(w.x0, w.y0, w.x1, w.y1, r.collide.x, r.collide.y, r.collide.x + nvx, r.collide.y + nvy);
-                        set = new Vector(this.x, this.y).add(hitPoint.sub(r.collide));
+
+                        set = new Vector(box.x, box.y).add(hitPoint.sub(r.collide));
                         n = w.getNormal();
                     }
                     else
@@ -491,9 +498,6 @@ class Player
 
                     let ref = nv.sub(n.mul(2).mul(nv.dot(n)));
                     // let ref = nv.sub(n.mul(nv.dot(n)));
-                    // console.log(ref)
-
-                    console.log(side);
 
 
                     return { side, set, ref };
@@ -550,7 +554,7 @@ function init()
     {
         let mousePos = getMousePos(cvs, evt);
         let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
-        console.log(message);
+        // console.log(message);
     }, false);
 
     previousTime = new Date().getTime();
@@ -621,7 +625,6 @@ function init()
 
     walls.push(new Wall(0, 700, 750, 250, -250));
     walls.push(new Wall(0, 600, 0, 0, 200));
-    walls.push(new Wall(0, 100, 100, 200, 200));
 }
 
 function keyDown(e)
