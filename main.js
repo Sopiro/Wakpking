@@ -82,6 +82,11 @@ class Vector
     {
         return new Vector(this.x * v, this.y * v);
     }
+
+    equals(v)
+    {
+        return this.x == v.x && this.y == v.y;
+    }
 }
 
 class Wall
@@ -97,12 +102,22 @@ class Wall
 
     checkCollideAABB(aabb, vx, vy)
     {
-        let res = this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? 'lb' :
-            this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? 'rb' :
-                this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? 'lt' :
-                    this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? 'rt' : undefined;
+        let collide =
+            this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? new Vector(aabb.x, aabb.y) :
+                this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.y) :
+                    this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? new Vector(aabb.x, aabb.Y) :
+                        this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.X) : undefined;
 
-        return res;
+        if (collide != undefined)
+            return { collide, endPoint: false };
+        else
+        {
+            collide =
+                aabb.checkCollidePoint(this.x0, this.y0) ? new Vector(this.x0, this.y0) :
+                    aabb.checkCollidePoint(this.x1, this.y1) ? new Vector(this.x1, this.y1) : undefined;
+
+            return { collide, endPoint: collide ? true : false }
+        }
     }
 
     checkCollide(ax, ay, bx, by)
@@ -256,10 +271,12 @@ class Player
         audios.landing.start();
     }
 
-    collideToWall(ref)
+    collideToWall(s, r)
     {
-        this.vx = ref.x * boundFriction;
-        this.vy = ref.y * boundFriction;
+        this.x = s.x;
+        this.y = s.y;
+        this.vx = r.x;
+        this.vy = r.y;
         audios.bounce.start();
     }
 
@@ -304,6 +321,7 @@ class Player
             else if (keys.ArrowRight && !this.crouching)
             {
                 c = this.testCollide(speed, 0);
+
                 if (!c.side)
                     this.vx = speed;
                 else
@@ -324,7 +342,10 @@ class Player
 
         //Apply gravity
         c = this.testCollide(0, -gravity);
-        if (!c.side) this.vy -= gravity;
+        if (!c.side)
+        {
+            this.vy -= gravity;
+        }
     }
 
     testCollide(nvx, nvy)
@@ -448,16 +469,34 @@ class Player
 
                 let r = w.checkCollideAABB(box, nvx, nvy);
 
-                if (r != undefined)
+                if (r.collide != undefined)
                 {
                     side = 'wall';
-
-                    let n = w.getNormal();
-
                     let nv = new Vector(nvx, nvy);
-                    let ref = nv.sub(n.mul(2).mul(nv.dot(n)));
 
-                    return { side, ref };
+                    let n;
+
+                    if (!r.endPoint)
+                    {
+                        let hitPoint = getIntersect(w.x0, w.y0, w.x1, w.y1, r.collide.x, r.collide.y, r.collide.x + nvx, r.collide.y + nvy);
+                        set = new Vector(this.x, this.y).add(hitPoint.sub(r.collide));
+                        n = w.getNormal();
+                    }
+                    else
+                    {
+                        n = new Vector(w.x0, w.y0).sub(new Vector(w.x1, w.y1));
+                        n.normalize();
+                        set = new Vector(box.x, box.y);
+                    }
+
+                    let ref = nv.sub(n.mul(2).mul(nv.dot(n)));
+                    // let ref = nv.sub(n.mul(nv.dot(n)));
+                    // console.log(ref)
+
+                    console.log(side);
+
+
+                    return { side, set, ref };
                 }
             }
         }
@@ -482,7 +521,7 @@ class Player
                 this.collideToTop(c.set);
                 break;
             case 'wall':
-                this.collideToWall(c.ref);
+                this.collideToWall(c.set, c.ref);
                 break;
 
         }
@@ -511,7 +550,7 @@ function init()
     {
         let mousePos = getMousePos(cvs, evt);
         let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
-        // console.log(message);
+        console.log(message);
     }, false);
 
     previousTime = new Date().getTime();
@@ -578,7 +617,11 @@ function init()
     blocks.push(new Block(2, new AABB(580, 480, 50, 50)));
     blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
 
-    walls.push(new Wall(0, 700, 0, 300, 300));
+    blocks.push(new Block(3, new AABB(470, 10, 100, 34)));
+
+    walls.push(new Wall(0, 700, 750, 250, -250));
+    walls.push(new Wall(0, 600, 0, 0, 200));
+    walls.push(new Wall(0, 100, 100, 200, 200));
 }
 
 function keyDown(e)
