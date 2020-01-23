@@ -615,7 +615,7 @@ function init()
     document.onkeyup = keyUp;
 
     player = new Player((WIDTH - 32) / 2.0, 0);
-    player = new Player(150, HEIGHT * 7 + 400);
+    // player = new Player(150, HEIGHT * 7 + 400);
 
     initLevels();
 }
