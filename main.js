@@ -98,25 +98,27 @@ class Wall
         this.y0 = y0;
         this.x1 = x0 + wx;
         this.y1 = y0 + wy;
+        this.wx = wx;
+        this.wy = wy;
     }
 
     checkCollideAABB(aabb, vx, vy)
     {
         let collide =
-            aabb.checkCollidePoint(this.x0, this.y0) ? new Vector(this.x0, this.y0) :
-                aabb.checkCollidePoint(this.x1, this.y1) ? new Vector(this.x1, this.y1) : undefined;
+            this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? new Vector(aabb.x, aabb.y) :
+                this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.y + vy) ? new Vector(aabb.X, aabb.y) :
+                    this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? new Vector(aabb.x, aabb.Y) :
+                        this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.Y) : undefined;
 
         if (collide != undefined)
-            return { collide, endPoint: true };
+            return { collide, endPoint: false };
         else
         {
             collide =
-                this.checkCollide(aabb.x, aabb.y, aabb.x + vx, aabb.y + vy) ? new Vector(aabb.x, aabb.y) :
-                    this.checkCollide(aabb.X, aabb.y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.y) :
-                        this.checkCollide(aabb.x, aabb.Y, aabb.x + vx, aabb.Y + vy) ? new Vector(aabb.x, aabb.Y) :
-                            this.checkCollide(aabb.X, aabb.Y, aabb.X + vx, aabb.Y + vy) ? new Vector(aabb.X, aabb.X) : undefined;
+                aabb.checkCollidePoint(this.x0, this.y0) ? new Vector(this.x0, this.y0) :
+                    aabb.checkCollidePoint(this.x1, this.y1) ? new Vector(this.x1, this.y1) : undefined;
 
-            return { collide, endPoint: false }
+            return { collide, endPoint: collide ? true : false }
         }
     }
 
@@ -137,6 +139,11 @@ class Wall
         res.normalize();
 
         return res;
+    }
+
+    convert()
+    {
+        return new Wall(this.level, this.x0, this.y0 + this.level * HEIGHT, this.wx, this.wy);
     }
 }
 
@@ -275,7 +282,7 @@ class Player
     {
         this.x = s.x;
         this.y = s.y;
-        this.vx = r.x;
+        this.vx = r.x * boundFriction;
         this.vy = r.y;
         audios.bounce.start();
         // this.onGround = false;
@@ -345,14 +352,19 @@ class Player
         //Apply gravity
         c = this.testCollide(0, -gravity);
         if (c.side == undefined)
+        {
             this.vy -= gravity;
+            this.onGround = false;
+        }
 
         //Test if current acceleration make collision happen or not 
         c = this.testCollide(this.vx, this.vy);
         if (c.side != undefined)
         {
-            this.reponseCollide(c);
+            if (c.side != 'error')
+                this.reponseCollide(c);
         }
+
     }
 
     testCollide(nvx, nvy)
@@ -474,6 +486,8 @@ class Player
             {
                 if (w.level != level) continue;
 
+                w = w.convert();
+
                 let r = w.checkCollideAABB(box, nvx, nvy);
 
                 if (r.collide != undefined)
@@ -488,17 +502,17 @@ class Player
 
                         set = new Vector(box.x, box.y).add(hitPoint.sub(r.collide));
                         n = w.getNormal();
+
                     }
                     else
                     {
                         n = new Vector(w.x0, w.y0).sub(new Vector(w.x1, w.y1));
                         n.normalize();
-                        set = new Vector(box.x, box.y);
+                        set = new Vector(box.x, box.y).sub(nv.mul(3));
                     }
 
                     let ref = nv.sub(n.mul(2).mul(nv.dot(n)));
                     // let ref = nv.sub(n.mul(nv.dot(n)));
-
 
                     return { side, set, ref };
                 }
@@ -550,11 +564,11 @@ function init()
     gfx.font = "20px Georgia";
     gfx.lineWidth = 2;
 
-    cvs.addEventListener('mousemove', function (evt)
+    cvs.addEventListener('click', function (evt)
     {
         let mousePos = getMousePos(cvs, evt);
         let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
-        // console.log(message);
+        console.log(message);
     }, false);
 
     previousTime = new Date().getTime();
@@ -600,17 +614,23 @@ function init()
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
 
-    player = new Player((WIDTH - 32) / 2.0, 0);
-    // player = new Player(900, 800 * 2 + 700);
+    // player = new Player((WIDTH - 32) / 2.0, 0);
+    // player = new Player(830, HEIGHT * 5 + 200);
+    player = new Player(150, HEIGHT * 7 + 400);
 
-    //Add Blocks
+    initLevels();
+}
+
+//Make game levels
+function initLevels()
+{
     blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
     blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
     blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
     blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
     blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
 
-    blocks.push(new Block(1, new AABB(200, 100, 34, 200)));
+    walls.push(new Wall(1, 200, 100, 0, 200));
     blocks.push(new Block(1, new AABB(0, 200, 34, 34)));
     blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
     blocks.push(new Block(1, new AABB(860, 200, 60, 34)));
@@ -622,9 +642,46 @@ function init()
     blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
 
     blocks.push(new Block(3, new AABB(470, 10, 100, 34)));
+    blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
+    walls.push(new Wall(3, 300, 280, 0, -34));
+    walls.push(new Wall(3, 300, 400, 0, -34));
+    walls.push(new Wall(3, 300, 400, -50, 150));
+    walls.push(new Wall(3, 300, 246, -50, -150));
+    walls.push(new Wall(3, 480, 550, 100, -15));
+    walls.push(new Wall(3, 680, 520, 100, -15));
+    blocks.push(new Block(3, new AABB(890, 450, 54, 34)));
 
-    walls.push(new Wall(0, 700, 750, 250, -250));
-    walls.push(new Wall(0, 600, 0, 0, 200));
+    blocks.push(new Block(4, new AABB(390, 10, 90, 34)));
+    blocks.push(new Block(4, new AABB(90, 20, 45, 200)));
+    blocks.push(new Block(4, new AABB(510, 380, 45, 200)));
+    blocks.push(new Block(4, new AABB(850, 715, 45, 85)));
+
+    blocks.push(new Block(5, new AABB(850, 0, 45, 65)));
+    blocks.push(new Block(5, new AABB(800, 200, 99, 34)));
+    walls.push(new Wall(5, 480, 500, 50, -100));
+    walls.push(new Wall(5, 390, 500, -50, -100));
+    walls.push(new Wall(5, 340, 400, 0, -140));
+    walls.push(new Wall(5, 530, 400, 0, -240));
+    blocks.push(new Block(5, new AABB(340, 160, 190, 34)));
+    blocks.push(new Block(5, new AABB(50, 160, 80, 34)));
+    blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+    blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+    walls.push(new Wall(5, 87, 680, 50, 50));
+
+    walls.push(new Wall(6, 200, 280, 50, -50));
+    blocks.push(new Block(6, new AABB(50, 130, 80, 34)));
+    walls.push(new Wall(6, 310, 380, 50, 50));
+    blocks.push(new Block(6, new AABB(330, 130, 80, 34)));
+    blocks.push(new Block(6, new AABB(410, 130, 34, 200)));
+    walls.push(new Wall(6, 700, 140, 50, 0));
+    blocks.push(new Block(6, new AABB(908, 265, 34, 34)));
+    blocks.push(new Block(6, new AABB(555, 444, 34, 200)));
+    blocks.push(new Block(6, new AABB(50, 650, 100, 34)));
+
+    blocks.push(new Block(7, new AABB(100, 300, 100, 34)));
+    blocks.push(new Block(7, new AABB(520, 430, 46, 34)));
+    blocks.push(new Block(7, new AABB(877, 600, 46, 34)));
+    walls.push(new Wall(7, 715, 430, 0, 300));
 }
 
 function keyDown(e)
@@ -686,8 +743,12 @@ function render()
     {
         gfx.fillText("Let's go up!", 550, HEIGHT - 80);
     }
-    if (level == 2)
-        gfx.fillText("Goal!", 880, HEIGHT - 750);
+    if (level == 7)
+    {
+        gfx.fillText("Goal!", 880, HEIGHT - 680);
+        gfx.fillText("↓", 890, HEIGHT - 660);
+        gfx.fillText("Thanks for playing~", 810, HEIGHT - 550);
+    }
 }
 
 function drawWall(wall)
