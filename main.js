@@ -741,6 +741,7 @@ function render()
     if (level == 0)
     {
         gfx.fillText("Let's go up!", 550, HEIGHT - 80);
+        gfx.fillText("[←, →, space] to play", 550, HEIGHT - 45);
     }
     if (level == 7)
     {
