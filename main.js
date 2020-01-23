@@ -614,9 +614,8 @@ function init()
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
 
-    // player = new Player((WIDTH - 32) / 2.0, 0);
-    // player = new Player(830, HEIGHT * 5 + 200);
-    player = new Player(150, HEIGHT * 7 + 400);
+    player = new Player((WIDTH - 32) / 2.0, 0);
+    // player = new Player(150, HEIGHT * 7 + 400);
 
     initLevels();
 }
