@@ -1,20 +1,44 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>점프컹스</title>
 	<script type="text/javascript" src="main.js"></script>
 	<style type="text/css">
-		#cvs
-		{
+		body {
+			margin: 28px;
+		}
+
+		#container {
+			width: 1000px;
+		}
+
+		#cvs {
 			border: 2px solid black;
+		}
+
+		#title {
+			display: inline;
+			font: 3em "Georgia"
+		}
+
+		#mute {
+			float: right;
+			margin-top: 40px;
 		}
 	</style>
 </head>
+
 <body>
-	<h1>점프컹스</h1>
 	<div id="container">
+		<div id="head">
+			<p id="title">점프컹스</p>
+			<p id="mute">Mute <input type="checkbox"></p>
+		</div>
 		<canvas id="cvs" width="1000" height="800"></canvas>
 	</div>
+
 </body>
+
 </html>

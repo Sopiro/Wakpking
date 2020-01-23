@@ -1,9 +1,11 @@
 let cvs;
 let gfx;
+let mute;
 
 const WIDTH = 1000;
 const HEIGHT = 800;
 const volume = 0.3;
+let isMuted = false;
 
 let d = new Date();
 let previousTime = 0;
@@ -563,12 +565,18 @@ function init()
     gfx = cvs.getContext("2d");
     gfx.font = "20px Georgia";
     gfx.lineWidth = 2;
+    mute = document.getElementById("mute");
 
-    cvs.addEventListener('click', function (evt)
+    cvs.addEventListener('click', function (e)
     {
-        let mousePos = getMousePos(cvs, evt);
+        let mousePos = getMousePos(cvs, e);
         let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
         console.log(message);
+    }, false);
+
+    mute.addEventListener('click', function (e)
+    {
+        isMuted = !isMuted;
     }, false);
 
     previousTime = new Date().getTime();
@@ -594,18 +602,21 @@ function init()
 
     audios.landing.start = function ()
     {
+        if (isMuted) return;
         audios.landing.pause();
         audios.landing.currentTime = 0;
         audios.landing.play();
     };
     audios.bounce.start = function ()
     {
+        if (isMuted) return;
         audios.bounce.pause();
         audios.bounce.currentTime = 0;
         audios.bounce.play();
     };
     audios.jump.start = function ()
     {
+        if (isMuted) return;
         audios.jump.pause();
         audios.jump.currentTime = 0;
         audios.jump.play();
