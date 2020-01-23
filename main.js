@@ -615,7 +615,7 @@ function init()
     document.onkeyup = keyUp;
 
     player = new Player((WIDTH - 32) / 2.0, 0);
-    // player = new Player(150, HEIGHT * 7 + 400);
+    player = new Player(150, HEIGHT * 7 + 400);
 
     initLevels();
 }
@@ -744,8 +744,8 @@ function render()
     }
     if (level == 7)
     {
-        gfx.fillText("Goal!", 880, HEIGHT - 680);
-        gfx.fillText("↓", 890, HEIGHT - 660);
+        gfx.fillText("Goal!", 880, HEIGHT - 700);
+        gfx.fillText("↓", 890, HEIGHT - 680);
         gfx.fillText("Thanks for playing~", 810, HEIGHT - 550);
     }
 }
