@@ -626,7 +626,7 @@ function init()
     document.onkeyup = keyUp;
 
     player = new Player((WIDTH - 32) / 2.0, 0);
-    // player = new Player(150, HEIGHT * 7 + 400);
+    // player = new Player(833, HEIGHT * 2 + 690);
 
     initLevels();
 }
@@ -641,17 +641,17 @@ function initLevels()
     blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
 
     walls.push(new Wall(1, 200, 100, 0, 200));
-    blocks.push(new Block(1, new AABB(0, 200, 34, 34)));
+    blocks.push(new Block(1, new AABB(0, 200, 48, 34)));
     blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
     blocks.push(new Block(1, new AABB(860, 200, 60, 34)));
     blocks.push(new Block(1, new AABB(670, 570, 180, 90)));
 
     blocks.push(new Block(2, new AABB(130, 10, 100, 45)));
     blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
-    blocks.push(new Block(2, new AABB(580, 480, 50, 50)));
-    blocks.push(new Block(2, new AABB(878, 650, 50, 50)));
+    blocks.push(new Block(2, new AABB(540, 400, 60, 180)));
+    blocks.push(new Block(2, new AABB(800, 480, 60, 180)));
 
-    blocks.push(new Block(3, new AABB(470, 10, 100, 34)));
+    blocks.push(new Block(3, new AABB(460, 10, 110, 34)));
     blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
     walls.push(new Wall(3, 300, 280, 0, -34));
     walls.push(new Wall(3, 300, 400, 0, -34));
