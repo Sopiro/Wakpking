@@ -5,7 +5,10 @@ let mute;
 const WIDTH = 1000;
 const HEIGHT = 800;
 const volume = 0.3;
+let guideMsg = '[←, →, space] to play';
+let guideMsg2 = '';
 let isMuted = false;
+let isTouch = false;
 
 let d = new Date();
 let previousTime = 0;
@@ -33,7 +36,7 @@ const chargingConst = 600.0;
 
 let palyer;
 let level = 0;
-let isTouch = false;
+let levelMax = 0;
 
 class Vector
 {
@@ -310,6 +313,7 @@ class Player
 
         //Calculate current level
         level = Math.trunc(this.y / HEIGHT);
+        levelMax = level > levelMax ? level : levelMax;
 
         // let moving = this.vx * this.vx + this.vy + this.vy;
         // let falling = this.vy < 0 ? true : false;
@@ -557,7 +561,6 @@ class Player
     {
         gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y + level * HEIGHT, this.size, this.size);
 
-        // gfx.fillText(Math.trunc(player.jumpGauge * 100), 940, HEIGHT - 770);
         gfx.beginPath();
         gfx.rect(941, HEIGHT - 779, 52, -14);
         gfx.stroke();
@@ -578,6 +581,12 @@ function init()
     gfx.font = "20px Georgia";
     gfx.lineWidth = 2;
     mute = document.getElementById("mute");
+
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))
+    {
+        guideMsg = 'Touch bottom left, right side to move';
+        guideMsg2 = 'Touch top left, right, middle side to jump';
+    }
 
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
@@ -802,10 +811,11 @@ function render()
         drawWall(w);
     });
 
-    if (level == 0)
+    if (levelMax == 0)
     {
         gfx.fillText("Let's go up!", 550, HEIGHT - 80);
-        gfx.fillText("[←, →, space] to play", 550, HEIGHT - 45);
+        gfx.fillText(guideMsg, 550, HEIGHT - 45);
+        gfx.fillText(guideMsg2, 550, HEIGHT - 25);
     }
     if (level == 7)
     {
