@@ -243,16 +243,6 @@ class Player
         return res;
     }
 
-    moveLeft()
-    {
-        this.vx = -speed;
-    }
-
-    moveRight()
-    {
-        this.vx = speed;
-    }
-
     getDrawImage()
     {
         if (this.crouching)
@@ -341,7 +331,7 @@ class Player
                 c = this.testCollide(-speed, 0);
 
                 if (c.side == undefined)
-                    this.moveLeft();
+                    this.vx = -speed;
                 else
                     this.vx = 0;
             }
@@ -350,7 +340,7 @@ class Player
                 c = this.testCollide(speed, 0);
 
                 if (c.side == undefined)
-                    this.moveRight();
+                    this.vx = speed;
                 else
                     this.vx = 0;
             }
@@ -637,7 +627,7 @@ function init()
             keys.ArrowRight = false;
         }
         else
-        keys[' '] = false;
+            keys[' '] = false;
     }, false);
 
     mute.addEventListener('click', function (e)
