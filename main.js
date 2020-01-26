@@ -33,6 +33,7 @@ const chargingConst = 600.0;
 
 let palyer;
 let level = 0;
+let isTouch = false;
 
 class Vector
 {
@@ -242,6 +243,16 @@ class Player
         return res;
     }
 
+    moveLeft()
+    {
+        this.vx = -speed;
+    }
+
+    moveRight()
+    {
+        this.vx = speed;
+    }
+
     getDrawImage()
     {
         if (this.crouching)
@@ -277,6 +288,11 @@ class Player
         this.y = w;
         this.vx = 0;
         this.vy = 0;
+        if (isTouch)
+        {
+            keys.ArrowLeft = false;
+            keys.ArrowRight = false;
+        }
         audios.landing.start();
     }
 
@@ -325,7 +341,7 @@ class Player
                 c = this.testCollide(-speed, 0);
 
                 if (c.side == undefined)
-                    this.vx = -speed;
+                    this.moveLeft();
                 else
                     this.vx = 0;
             }
@@ -334,7 +350,7 @@ class Player
                 c = this.testCollide(speed, 0);
 
                 if (c.side == undefined)
-                    this.vx = speed;
+                    this.moveRight();
                 else
                     this.vx = 0;
             }
@@ -550,6 +566,12 @@ class Player
     render()
     {
         gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y + level * HEIGHT, this.size, this.size);
+
+        // gfx.fillText(Math.trunc(player.jumpGauge * 100), 940, HEIGHT - 770);
+        gfx.beginPath();
+        gfx.rect(941, HEIGHT - 779, 52, -14);
+        gfx.stroke();
+        drawBlock(942, 780, Math.trunc(player.jumpGauge * 50), 12);
     }
 }
 
@@ -567,11 +589,55 @@ function init()
     gfx.lineWidth = 2;
     mute = document.getElementById("mute");
 
+    document.onkeydown = keyDown;
+    document.onkeyup = keyUp;
+
     cvs.addEventListener('click', function (e)
     {
         let mousePos = getMousePos(cvs, e);
-        let message = Math.trunc(mousePos.x) + ', ' + (HEIGHT - Math.trunc(mousePos.y));
+        let message = mousePos.x + ', ' + mousePos.y;
         console.log(message);
+    }, false);
+
+    cvs.addEventListener('touchstart', function (e)
+    {
+        let pos = getTouchPos(cvs, e);
+
+        if (pos.x < WIDTH / 2 && pos.y < HEIGHT / 2)
+        {
+            keys.ArrowLeft = true;
+        }
+        else if (pos.x >= WIDTH / 2 && pos.y < HEIGHT / 2)
+        {
+            keys.ArrowRight = true;
+        }
+        else if (pos.x < WIDTH / 5 * 2 && pos.y >= HEIGHT / 2)
+        {
+            keys[' '] = true;
+            keys.ArrowLeft = true;
+        }
+        else if (pos.x >= WIDTH / 5 * 3 && pos.y >= HEIGHT / 2)
+        {
+            keys[' '] = true;
+            keys.ArrowRight = true;
+        }
+        else if (pos.x >= WIDTH / 5 * 2 && pos.x < WIDTH / 5 * 3 && pos.y >= HEIGHT / 2)
+        {
+            keys[' '] = true;
+        }
+
+        isTouch = true;
+    }, false);
+
+    cvs.addEventListener('touchend', function (e)
+    {
+        if (!keys[' '])
+        {
+            keys.ArrowLeft = false;
+            keys.ArrowRight = false;
+        }
+        else
+        keys[' '] = false;
     }, false);
 
     mute.addEventListener('click', function (e)
@@ -621,9 +687,6 @@ function init()
         audios.jump.currentTime = 0;
         audios.jump.play();
     };
-
-    document.onkeydown = keyDown;
-    document.onkeyup = keyUp;
 
     player = new Player((WIDTH - 32) / 2.0, 0);
     // player = new Player(833, HEIGHT * 2 + 690);
@@ -786,8 +849,17 @@ function getMousePos(canvas, evt)
 {
     let rect = canvas.getBoundingClientRect();
     return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
+        x: Math.trunc(evt.clientX - rect.left),
+        y: HEIGHT - Math.trunc(evt.clientY - rect.top)
+    };
+}
+
+function getTouchPos(canvas, evt)
+{
+    let rect = canvas.getBoundingClientRect();
+    return {
+        x: Math.trunc(evt.touches[0].clientX - rect.left),
+        y: HEIGHT - Math.trunc(evt.touches[0].clientY - rect.top)
     };
 }
 
