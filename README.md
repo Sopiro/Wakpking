@@ -5,5 +5,5 @@ playable at : https://sopiro.github.io/JumpKeongs/
 
 ## Preview
 <p align="center">
-  <img src="view.jpg" />
+  <img src="./view.JPG" />
 </p>
