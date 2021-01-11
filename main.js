@@ -648,21 +648,21 @@ function init()
 
     //Images 
     images.normal = new Image();
-    images.normal.src = "./normal.png";
+    images.normal.src = "./images/normal.png";
     images.normal.onload = function () { resourceLoaded++; };
     images.crouch = new Image();
-    images.crouch.src = "./crouch.png";
+    images.crouch.src = "./images/crouch.png";
     images.crouch.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
-    audios.landing.src = "./landing.wav";
+    audios.landing.src = "./audios/landing.wav";
     audios.landing.volume = volume;
     audios.bounce = new Audio();
-    audios.bounce.src = "./bounce.wav";
+    audios.bounce.src = "./audios/bounce.wav";
     audios.bounce.volume = volume;
     audios.jump = new Audio();
-    audios.jump.src = "./jump2.wav";
+    audios.jump.src = "./audios/jump2.wav";
     audios.jump.volume = volume;
 
     audios.landing.start = function ()
