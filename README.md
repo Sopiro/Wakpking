@@ -1,7 +1,10 @@
-# JumpKeongs
-Jump Keongs. Jump king copie game  
+# Jump Keongs
 
-playable at : https://sopiro.github.io/JumpKeongs/  
+Jump Keongs.  
+Jump king copie game written vanilla javascript
+
+## Play
+Live: https://sopiro.github.io/JumpKeongs/  
 
 ## Preview
 ![preview](.github/preview.gif)
