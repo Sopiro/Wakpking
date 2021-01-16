@@ -1,7 +1,7 @@
 # Jump Keongs
 
 Jump Keongs.  
-Jump king copie game written vanilla javascript
+Jump king clone game written vanilla javascript
 
 ## Play
 Live: https://sopiro.github.io/JumpKeongs/  
