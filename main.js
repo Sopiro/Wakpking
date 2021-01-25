@@ -1,3 +1,5 @@
+'use strict'
+
 let cvs;
 let gfx;
 let mute;
@@ -34,7 +36,7 @@ const boundFriction = 0.66;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
-let palyer;
+let player;
 let level = 0;
 let levelMax = 0;
 
