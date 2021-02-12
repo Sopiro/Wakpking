@@ -4,7 +4,8 @@ Jump Keongs.
 Jump king clone game written in vanilla javascript
 
 ## Play
-Live: https://sopiro.github.io/JumpKeongs/  
+github.io: https://sopiro.github.io/JumpKeongs/  
+itch.io: https://sopiro.itch.io/jumpkeongs  
 
 ## Preview
 ![preview](.github/preview.gif)
