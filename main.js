@@ -7,7 +7,7 @@ let mute;
 const WIDTH = 1000;
 const HEIGHT = 800;
 const volume = 0.3;
-let guideMsg = '[←, →, space] to play';
+let guideMsg = '[←, →]로 움직이고 [space]로 점프';
 let guideMsg2 = '';
 let isMuted = false;
 let isTouch = false;
@@ -570,6 +570,7 @@ class Player
     }
 }
 
+
 window.onload = function ()
 {
     init();
@@ -815,7 +816,7 @@ function render()
 
     if (levelMax == 0)
     {
-        gfx.fillText("Let's go up!", 550, HEIGHT - 80);
+        gfx.fillText("올라 가즈아~", 550, HEIGHT - 80);
         gfx.fillText(guideMsg, 550, HEIGHT - 45);
         gfx.fillText(guideMsg2, 550, HEIGHT - 25);
     }

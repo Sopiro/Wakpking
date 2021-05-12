@@ -1,0 +1,16 @@
+#cvs {
+    border: 2px solid black;
+    margin: 0 auto
+}
+
+#head {
+    margin: 0 60px
+}
+
+#title {
+    font: 3em "Georgia"
+}
+
+#mute{
+    margin-top: 50px;
+}
