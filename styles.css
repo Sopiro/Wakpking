@@ -1,16 +1,28 @@
+@font-face {
+    font-family: 'Independence_hall';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/Independence_hall.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 #cvs {
-    border: 2px solid black;
-    margin: 0 auto
+    border: 2.5px solid black;
+    margin: 0 auto;
 }
 
 #head {
-    margin: 0 60px
+    margin: 0 60px;
 }
 
 #title {
-    font: 3em "Georgia"
+    font: 3em "Independence_hall";
+    margin-top: 10px;
 }
 
 #mute{
     margin-top: 50px;
+}
+
+.fonted{
+    font: "Independence_hall";
 }

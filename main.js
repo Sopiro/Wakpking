@@ -6,7 +6,8 @@ let mute;
 
 const WIDTH = 1000;
 const HEIGHT = 800;
-const volume = 0.3;
+let volume = 0.3;
+let bgmVolume = 0.3;
 let guideMsg = '[←, →]로 움직이고 [space]로 점프';
 let guideMsg2 = '';
 let isMuted = false;
@@ -18,7 +19,7 @@ let currentTime = 0;
 let passedTime = 0;
 let msPerFrame = 1000.0 / 144.0;
 
-const numResource = 2;
+const numResource = 19;
 let resourceLoaded = 0;
 
 let images = {};
@@ -26,6 +27,8 @@ let audios = {};
 let keys = {};
 let blocks = [];
 let walls = [];
+
+let mouse = { last_down: false, curr_down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0.0, dy: 0.0 };
 
 const speed = 2.7;
 const gravity = 0.19;
@@ -36,6 +39,9 @@ const boundFriction = 0.66;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
+let gameMode = 0;
+let scenes = [];
+let scene = 0;
 let player;
 let level = 0;
 let levelMax = 0;
@@ -230,6 +236,11 @@ class Player
         this.size = 32;
         this.radius = this.size / 2.0 * 1.414;
         this.jumpGauge = 0;
+
+        this.rs = 64;
+        this.dir = 1;
+
+        this.lastHeight = 0;
     }
 
     aabb()
@@ -288,7 +299,36 @@ class Player
             keys.ArrowLeft = false;
             keys.ArrowRight = false;
         }
-        audios.landing.start();
+        console.log();
+
+        let gap = this.lastHeight - this.y;
+
+        if (gap >= 300)
+        {
+            let r = Math.trunc(Math.random() * 3);
+
+            switch (r)
+            {
+                case 0:
+                    audios.ah1.start();
+
+                    break;
+
+                case 1:
+                    audios.ah2.start();
+
+                    break;
+                case 2:
+                    audios.ah3.start();
+
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+            audios.landing.start();
+
     }
 
     collideToWall(s, r)
@@ -323,6 +363,12 @@ class Player
         if (this.onGround)
         {
             this.vx *= groundFriction;
+
+            if (this.onGround)
+            {
+                if (keys.ArrowLeft) this.dir = 1;
+                if (keys.ArrowRight) this.dir = -1;
+            }
 
             if (keys[' '] && !this.crouching)
             {
@@ -360,6 +406,8 @@ class Player
                 this.jumpGauge = 0;
                 this.onGround = false;
                 this.crouching = false;
+
+                this.lastHeight = this.y;
             }
         }
 
@@ -561,15 +609,198 @@ class Player
 
     render()
     {
-        gfx.drawImage(images[this.getDrawImage()], this.x, HEIGHT - this.size - this.y + level * HEIGHT, this.size, this.size);
+        gfx.save();
+        gfx.translate(this.x - 16, HEIGHT - this.rs - this.y + level * HEIGHT)
+        gfx.scale(1 * this.dir, 1);
+        gfx.drawImage(images[this.getDrawImage()], 0, 0, this.rs * this.dir, this.rs);
+        gfx.restore();
 
         gfx.beginPath();
         gfx.rect(941, HEIGHT - 779, 52, -14);
         gfx.stroke();
-        drawBlock(942, 780, Math.trunc(player.jumpGauge * 50), 12);
+        drawRect(942, 780, Math.trunc(player.jumpGauge * 50), 12);
     }
 }
 
+class MainScene
+{
+    constructor()
+    {
+        this.titlePos = 0;
+        this.start_img = images.start;
+        this.sett_img = images.sett;
+
+        this.btnStartX = (WIDTH - 435) / 2.0;
+        this.btnEndX = (WIDTH - 435) / 2.0 + 435;
+        this.halfHeight = HEIGHT / 2.0;
+    }
+
+    update(time)
+    {
+        this.titlePos = Math.sin(time) * 10;
+
+        if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
+        {
+            if (mouse.currY > this.halfHeight + 46 && mouse.currY <= this.halfHeight + 46 + 109)
+            {
+                if (this.start_img == images.start)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    scene = 1;
+                }
+                this.start_img = images.start_o;
+            }
+            else if (mouse.currY > this.halfHeight + 46 + 120 && mouse.currY <= this.halfHeight + 46 + 109 + 120)
+            {
+                if (this.sett_img == images.sett)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    scene = 3;
+                }
+                this.sett_img = images.sett_o;
+            }
+            else
+            {
+                this.start_img = images.start;
+                this.sett_img = images.sett;
+            }
+        }
+        else
+        {
+            this.start_img = images.start;
+            this.sett_img = images.sett;
+        }
+    }
+
+    render()
+    {
+        // gfx.save();
+        // gfx.translate(100, 100);
+        // gfx.drawImage(images.normal, 0, 0, 100, 100);
+        // gfx.restore();
+
+        // gfx.save();
+        // gfx.translate(900, 100);
+        // gfx.scale(-1, 1);
+        // gfx.drawImage(images.normal, 0, 0, 100, 100);
+        // gfx.restore();
+
+        gfx.drawImage(images.wakdu, (WIDTH - 600) / 2.0, 350);
+        gfx.drawImage(images.title, (WIDTH - 800) / 2.0, this.titlePos);
+        gfx.drawImage(this.start_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
+        gfx.drawImage(this.sett_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
+    }
+}
+
+class LevelScene
+{
+    constructor()
+    {
+        this.normal_img = images.mode_normal;
+        this.jjin_img = images.mode_jjin;
+        this.sjjin_img = images.mode_sjjin;
+
+        this.btnStartX = (WIDTH - 435) / 2.0;
+        this.btnEndX = (WIDTH - 435) / 2.0 + 435;
+        this.halfHeight = HEIGHT / 2.0;
+    }
+
+    update(time)
+    {
+        if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
+        {
+            if (mouse.currY > this.halfHeight + 46 - 120 && mouse.currY <= this.halfHeight + 46 + 109 - 120)
+            {
+                if (this.start_img == images.start)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    gameMode = 0;
+                    scene = 2;
+                    audios.bgm.start();
+                }
+                this.normal_img = images.mode_normal_o;
+            }
+            else if (mouse.currY > this.halfHeight + 46 && mouse.currY <= this.halfHeight + 46 + 109)
+            {
+                if (this.sett_img == images.sett)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    gameMode = 1;
+                    scene = 2;
+                    audios.bgm.start();
+                }
+                this.jjin_img = images.mode_jjin_o;
+            }
+            else if (mouse.currY > this.halfHeight + 46 + 120 && mouse.currY <= this.halfHeight + 46 + 109 + 120)
+            {
+                if (this.sett_img == images.sett)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    gameMode = 2;
+                    scene = 2;
+                    audios.bgm.start();
+                }
+                this.sjjin_img = images.mode_sjjin_o;
+            }
+            else
+            {
+                this.normal_img = images.mode_normal;
+                this.jjin_img = images.mode_jjin;
+                this.sjjin_img = images.mode_sjjin;
+            }
+        }
+        else
+        {
+            this.normal_img = images.mode_normal;
+            this.jjin_img = images.mode_jjin;
+            this.sjjin_img = images.mode_sjjin;
+        }
+    }
+
+    render()
+    {
+        gfx.drawImage(images.chimha, 80, 600);
+        gfx.drawImage(images.chimha, 380, 600);
+        gfx.drawImage(images.chimha, 680, 600);
+        gfx.drawImage(images.level, (WIDTH - 800) / 2.0, 0);
+        gfx.drawImage(this.normal_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 120);
+        gfx.drawImage(this.jjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
+        gfx.drawImage(this.sjjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
+    }
+}
+
+class SettScene
+{
+    constructor()
+    {
+
+    }
+
+    update()
+    {
+
+    }
+
+    render()
+    {
+
+    }
+}
 
 window.onload = function ()
 {
@@ -594,12 +825,25 @@ function init()
     document.onkeydown = keyDown;
     document.onkeyup = keyUp;
 
-    cvs.addEventListener('click', function (e)
+    cvs.addEventListener("mousedown", (e) =>
     {
-        let mousePos = getMousePos(cvs, e);
-        let message = mousePos.x + ', ' + mousePos.y;
-        console.log(message);
+        if (e.button != 0) return;
+
+        mouse.curr_down = true;
     }, false);
+    window.addEventListener("mouseup", (e) =>
+    {
+        if (e.button != 0) return;
+
+        mouse.curr_down = false;
+    }, false);
+    window.addEventListener("mousemove", (e) =>
+    {
+        let rect = cvs.getBoundingClientRect();
+
+        mouse.currX = Math.trunc(e.clientX - rect.left);
+        mouse.currY = Math.trunc(e.clientY - rect.top);
+    });
 
     cvs.addEventListener('touchstart', function (e)
     {
@@ -656,6 +900,57 @@ function init()
     images.crouch = new Image();
     images.crouch.src = "./images/crouch.png";
     images.crouch.onload = function () { resourceLoaded++; };
+    images.title = new Image();
+    images.title.src = "./images/title.png";
+    images.title.onload = function () { resourceLoaded++; };
+    images.wakdu = new Image();
+    images.wakdu.src = "./images/wakdu.png";
+    images.wakdu.onload = function () { resourceLoaded++; };
+    images.start = new Image();
+    images.start.src = "./images/start.png"
+    images.start.onload = function () { resourceLoaded++; };
+    images.start_o = new Image();
+    images.start_o.src = "./images/start-o.png"
+    images.start_o.onload = function () { resourceLoaded++; };
+    images.sett = new Image();
+    images.sett.src = "./images/sett.png"
+    images.sett.onload = function () { resourceLoaded++; };
+    images.sett_o = new Image();
+    images.sett_o.src = "./images/sett-o.png"
+    images.sett_o.onload = function () { resourceLoaded++; };
+    images.level = new Image();
+    images.level.src = "./images/level.png"
+    images.level.onload = function () { resourceLoaded++; };
+    images.mode_normal = new Image();
+    images.mode_normal.src = "./images/mode_normal.png"
+    images.mode_normal.onload = function () { resourceLoaded++; };
+    images.mode_normal_o = new Image();
+    images.mode_normal_o.src = "./images/mode_normal-o.png"
+    images.mode_normal_o.onload = function () { resourceLoaded++; };
+    images.mode_jjin = new Image();
+    images.mode_jjin.src = "./images/mode_jjin.png"
+    images.mode_jjin.onload = function () { resourceLoaded++; };
+    images.mode_jjin_o = new Image();
+    images.mode_jjin_o.src = "./images/mode_jjin-o.png"
+    images.mode_jjin_o.onload = function () { resourceLoaded++; };
+    images.mode_sjjin = new Image();
+    images.mode_sjjin.src = "./images/mode_sjjin.png"
+    images.mode_sjjin.onload = function () { resourceLoaded++; };
+    images.mode_sjjin_o = new Image();
+    images.mode_sjjin_o.src = "./images/mode_sjjin-o.png"
+    images.mode_sjjin_o.onload = function () { resourceLoaded++; };
+    images.floor1 = new Image();
+    images.floor1.src = "./images/floor1.png"
+    images.floor1.onload = function () { resourceLoaded++; };
+    images.floor2 = new Image();
+    images.floor2.src = "./images/floor2.png"
+    images.floor2.onload = function () { resourceLoaded++; };
+    images.foothold = new Image();
+    images.foothold.src = "./images/foothold.png"
+    images.foothold.onload = function () { resourceLoaded++; };
+    images.chimha = new Image();
+    images.chimha.src = "./images/chimha.png"
+    images.chimha.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
@@ -667,6 +962,19 @@ function init()
     audios.jump = new Audio();
     audios.jump.src = "./audios/jump2.wav";
     audios.jump.volume = volume;
+    audios.bgm = new Audio();
+    audios.bgm.src = "./audios/bgm.mp3";
+    audios.bgm.volume = bgmVolume;
+    audios.bgm.addEventListener('ended', function () { this.currentTime = 0; this.play(); }, false);
+    audios.ah1 = new Audio();
+    audios.ah1.src = "./audios/ah1.ogg";
+    audios.ah1.volume = volume;
+    audios.ah2 = new Audio();
+    audios.ah2.src = "./audios/ah2.ogg";
+    audios.ah2.volume = volume;
+    audios.ah3 = new Audio();
+    audios.ah3.src = "./audios/ah3.ogg";
+    audios.ah3.volume = volume;
 
     audios.landing.start = function ()
     {
@@ -689,12 +997,45 @@ function init()
         audios.jump.currentTime = 0;
         audios.jump.play();
     };
+    audios.bgm.start = function ()
+    {
+        if (isMuted) return;
+        audios.bgm.pause();
+        audios.bgm.currentTime = 0;
+        audios.bgm.play();
+    };
+    audios.ah1.start = function ()
+    {
+        if (isMuted) return;
+        audios.ah1.pause();
+        audios.ah1.currentTime = 0;
+        audios.ah1.play();
+    };
+    audios.ah2.start = function ()
+    {
+        if (isMuted) return;
+        audios.ah2.pause();
+        audios.ah2.currentTime = 0;
+        audios.ah2.play();
+    };
+    audios.ah3.start = function ()
+    {
+        if (isMuted) return;
+        audios.ah3.pause();
+        audios.ah3.currentTime = 0;
+        audios.ah3.play();
+    };
 
     player = new Player((WIDTH - 32) / 2.0, 0);
     // player = new Player(833, HEIGHT * 2 + 690);
 
+    scenes.main = new MainScene();
+    scenes.level = new LevelScene();
+    scenes.sett = new SettScene();
+
     initLevels();
 }
+
 
 //Make game levels
 function initLevels()
@@ -788,7 +1129,35 @@ function run(time)
 
 function update(delta)
 {
-    player.update(delta);
+    switch (scene)
+    {
+        case 0:
+            {
+                scenes.main.update(performance.now() / 400.0);
+                break;
+            }
+        case 1:
+            {
+                scenes.level.update();
+                break;
+            }
+        case 2:
+            {
+                player.update(delta);
+                break;
+            }
+        case 3:
+            {
+                scenes.sett.update();
+                break;
+            }
+    }
+
+    mouse.dx = mouse.currX - mouse.lastX;
+    mouse.dy = mouse.currY - mouse.lastY;
+    mouse.lastX = mouse.currX;
+    mouse.lastY = mouse.currY;
+    mouse.last_down = mouse.curr_down;
 }
 
 function render()
@@ -798,33 +1167,60 @@ function render()
 
     gfx.clearRect(0, 0, WIDTH, HEIGHT);
 
-    player.render();
-
-    blocks.forEach(b =>
+    switch (scene)
     {
-        if (b.level != level) return;
+        case 0:
+            {
+                scenes.main.render();
+                break;
+            }
+        case 1:
+            {
+                scenes.level.render();
+                break;
+            }
+        case 2:
+            {
+                if (level == 0)
+                    gfx.drawImage(images.floor1, 0, 0);
+                else
+                    gfx.drawImage(images.floor2, 0, 0);
 
-        drawAABB(b.aabb);
-    });
+                player.render();
 
-    walls.forEach(w =>
-    {
-        if (w.level != level) return;
+                blocks.forEach(b =>
+                {
+                    if (b.level != level) return;
 
-        drawWall(w);
-    });
+                    drawAABB(b.aabb);
+                });
 
-    if (levelMax == 0)
-    {
-        gfx.fillText("올라 가즈아~", 550, HEIGHT - 80);
-        gfx.fillText(guideMsg, 550, HEIGHT - 45);
-        gfx.fillText(guideMsg2, 550, HEIGHT - 25);
-    }
-    if (level == 7)
-    {
-        gfx.fillText("Goal!", 880, HEIGHT - 700);
-        gfx.fillText("↓", 890, HEIGHT - 680);
-        gfx.fillText("Thanks for playing~", 810, HEIGHT - 550);
+                walls.forEach(w =>
+                {
+                    if (w.level != level) return;
+
+                    drawWall(w);
+                });
+
+                if (levelMax == 0)
+                {
+                    gfx.fillText("올라 가즈아~", 550, HEIGHT - 80);
+                    gfx.fillText(guideMsg, 550, HEIGHT - 45);
+                    gfx.fillText(guideMsg2, 550, HEIGHT - 25);
+                }
+                if (level == 7)
+                {
+                    gfx.fillText("Goal!", 880, HEIGHT - 700);
+                    gfx.fillText("↓", 890, HEIGHT - 680);
+                    gfx.fillText("Thanks for playing~", 810, HEIGHT - 550);
+                }
+                break;
+            }
+        case 3:
+            {
+                scenes.sett.render();
+            }
+            break;
     }
 }
 
@@ -842,6 +1238,12 @@ function drawAABB(aabb)
 }
 
 function drawBlock(x, y, w, h)
+{
+    drawRect(x, y, w, h);
+    gfx.drawImage(images.foothold, 0, 0, w, 100 + h, x + 5, HEIGHT - y - 5, w - 10, -h + 10);
+}
+
+function drawRect(x, y, w, h)
 {
     gfx.beginPath();
     gfx.rect(x, HEIGHT - y, w, -h);
