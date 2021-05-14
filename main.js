@@ -763,10 +763,14 @@ class MainScene
 
     render()
     {
-        // gfx.save();
-        // gfx.translate(100, 100);
-        // gfx.drawImage(images.normal, 0, 0, 100, 100);
-        // gfx.restore();
+        gfx.save();
+        gfx.translate(100, 100);
+        gfx.drawImage(images.angel, 0, 0, 100, 125);
+        gfx.restore();
+
+        gfx.font = "20px Independence_hall"
+        gfx.fillText("만나러 와줄꺼지..?", 80, 80);
+
 
         // gfx.save();
         // gfx.translate(900, 100);
@@ -776,6 +780,8 @@ class MainScene
 
         gfx.font = "192px Independence_hall"
         gfx.fillText("왁프킹", (WIDTH - 490) / 2.0, this.titlePos + 220);
+        gfx.font = "20px Independence_hall"
+        gfx.fillText("음.. 아마도?", 800, HEIGHT - 300);
 
         gfx.drawImage(images.wakdu, (WIDTH - 600) / 2.0, 350);
         gfx.drawImage(this.start_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
