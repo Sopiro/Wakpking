@@ -9,7 +9,7 @@ const HEIGHT = 800;
 let volume = 0.3;
 let bgmVolume = 0.3;
 let guideMsg = '[←, →]로 움직이고 [space]로 점프';
-let guideMsg2 = '';
+let guideMsg2 = 'Esc 누르면 설정창';
 let isMuted = false;
 let isTouch = false;
 
@@ -24,7 +24,8 @@ let resourceLoaded = 0;
 
 let images = {};
 let audios = {};
-let keys = {};
+let lastKeys = {};
+let currKeys = {};
 let blocks = [];
 let walls = [];
 
@@ -41,6 +42,7 @@ const chargingConst = 600.0;
 
 let gameMode = 0;
 let scenes = [];
+let lastScene = 0;
 let scene = 0;
 let player;
 let level = 0;
@@ -241,6 +243,7 @@ class Player
         this.dir = 1;
 
         this.lastHeight = 0;
+        this.numJumps = 0;
     }
 
     aabb()
@@ -286,6 +289,7 @@ class Player
         this.y = w - this.size;
         this.vy *= -1 * boundFriction;
         audios.bounce.start();
+        this.playRandomHurtSound();
     }
 
     collideToBottom(w)
@@ -296,38 +300,15 @@ class Player
         this.vy = 0;
         if (isTouch)
         {
-            keys.ArrowLeft = false;
-            keys.ArrowRight = false;
+            currKeys.ArrowLeft = false;
+            currKeys.ArrowRight = false;
         }
-        console.log();
 
         let gap = this.lastHeight - this.y;
 
+        audios.landing.start();
         if (gap >= 300)
-        {
-            let r = Math.trunc(Math.random() * 3);
-
-            switch (r)
-            {
-                case 0:
-                    audios.ah1.start();
-
-                    break;
-
-                case 1:
-                    audios.ah2.start();
-
-                    break;
-                case 2:
-                    audios.ah3.start();
-
-                    break;
-                default:
-                    break;
-            }
-        }
-        else
-            audios.landing.start();
+            this.playRandomHurtSound();
 
     }
 
@@ -339,6 +320,24 @@ class Player
         this.vy = r.y;
         audios.bounce.start();
         // this.onGround = false;
+    }
+
+    playRandomHurtSound()
+    {
+        let r = Math.trunc(Math.random() * 3);
+
+        switch (r)
+        {
+            case 0:
+                audios.ah1.start();
+                break;
+            case 1:
+                audios.ah2.start();
+                break;
+            case 2:
+                audios.ah3.start();
+                break;
+        }
     }
 
     update(delta)
@@ -366,19 +365,19 @@ class Player
 
             if (this.onGround)
             {
-                if (keys.ArrowLeft) this.dir = 1;
-                if (keys.ArrowRight) this.dir = -1;
+                if (currKeys.ArrowLeft) this.dir = 1;
+                if (currKeys.ArrowRight) this.dir = -1;
             }
 
-            if (keys[' '] && !this.crouching)
+            if (currKeys[' '] && !this.crouching)
             {
                 this.crouching = true;
             }
-            else if (keys[' '] && this.crouching)
+            else if (currKeys[' '] && this.crouching)
             {
                 this.jumpGauge >= 1 ? this.jumpGauge = 1 : this.jumpGauge += delta / chargingConst;
             }
-            else if (keys.ArrowLeft && !this.crouching)
+            else if (currKeys.ArrowLeft && !this.crouching)
             {
                 c = this.testCollide(-speed, 0);
 
@@ -387,7 +386,7 @@ class Player
                 else
                     this.vx = 0;
             }
-            else if (keys.ArrowRight && !this.crouching)
+            else if (currKeys.ArrowRight && !this.crouching)
             {
                 c = this.testCollide(speed, 0);
 
@@ -396,10 +395,10 @@ class Player
                 else
                     this.vx = 0;
             }
-            else if (!keys[' '] && this.crouching)
+            else if (!currKeys[' '] && this.crouching)
             {
-                if (keys.ArrowLeft) this.vx = -sideJump;
-                else if (keys.ArrowRight) this.vx = sideJump;
+                if (currKeys.ArrowLeft) this.vx = -sideJump;
+                else if (currKeys.ArrowRight) this.vx = sideJump;
                 audios.jump.start();
 
                 this.vy = this.jumpGauge * JumpConst;
@@ -408,6 +407,7 @@ class Player
                 this.crouching = false;
 
                 this.lastHeight = this.y;
+                this.numJumps++;
             }
         }
 
@@ -615,10 +615,16 @@ class Player
         gfx.drawImage(images[this.getDrawImage()], 0, 0, this.rs * this.dir, this.rs);
         gfx.restore();
 
-        gfx.beginPath();
-        gfx.rect(941, HEIGHT - 779, 52, -14);
-        gfx.stroke();
-        drawRect(942, 780, Math.trunc(player.jumpGauge * 50), 12);
+        if (gameMode >= 1)
+        {
+            gfx.font = "12px Independence_hall"
+            gfx.fillText("찐따 게이지", 894 + 22, HEIGHT - 782);
+
+            gfx.beginPath();
+            gfx.rect(894, HEIGHT - 779, 100, -14);
+            gfx.stroke();
+            drawRect(894, 780, Math.trunc(player.jumpGauge * 100), 12);
+        }
     }
 }
 
@@ -630,8 +636,8 @@ class MainScene
         this.start_img = images.start;
         this.sett_img = images.sett;
 
-        this.btnStartX = (WIDTH - 435) / 2.0;
-        this.btnEndX = (WIDTH - 435) / 2.0 + 435;
+        this.btnStartX = (WIDTH - 360) / 2.0;
+        this.btnEndX = (WIDTH - 360) / 2.0 + 360;
         this.halfHeight = HEIGHT / 2.0;
     }
 
@@ -649,7 +655,7 @@ class MainScene
                 }
                 if (!mouse.curr_down && mouse.last_down)
                 {
-                    scene = 1;
+                    changeScene(1);
                 }
                 this.start_img = images.start_o;
             }
@@ -661,7 +667,7 @@ class MainScene
                 }
                 if (!mouse.curr_down && mouse.last_down)
                 {
-                    scene = 3;
+                    changeScene(3);
                 }
                 this.sett_img = images.sett_o;
             }
@@ -691,8 +697,10 @@ class MainScene
         // gfx.drawImage(images.normal, 0, 0, 100, 100);
         // gfx.restore();
 
+        gfx.font = "192px Independence_hall"
+        gfx.fillText("왁프킹", (WIDTH - 490) / 2.0, this.titlePos + 220);
+
         gfx.drawImage(images.wakdu, (WIDTH - 600) / 2.0, 350);
-        gfx.drawImage(images.title, (WIDTH - 800) / 2.0, this.titlePos);
         gfx.drawImage(this.start_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
         gfx.drawImage(this.sett_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
     }
@@ -706,53 +714,56 @@ class LevelScene
         this.jjin_img = images.mode_jjin;
         this.sjjin_img = images.mode_sjjin;
 
-        this.btnStartX = (WIDTH - 435) / 2.0;
-        this.btnEndX = (WIDTH - 435) / 2.0 + 435;
+        this.btnStartX = (WIDTH - 360) / 2.0;
+        this.btnEndX = (WIDTH - 360) / 2.0 + 360;
         this.halfHeight = HEIGHT / 2.0;
     }
 
     update(time)
     {
+        if (!lastKeys.Escape && currKeys.Escape)
+        {
+            changeScene(lastScene);
+        }
+
         if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
         {
             if (mouse.currY > this.halfHeight + 46 - 120 && mouse.currY <= this.halfHeight + 46 + 109 - 120)
             {
-                if (this.start_img == images.start)
+                if (this.normal_img == images.mode_normal)
                 {
 
                 }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 0;
-                    scene = 2;
-                    audios.bgm.start();
+                    changeScene(2);
                 }
                 this.normal_img = images.mode_normal_o;
             }
             else if (mouse.currY > this.halfHeight + 46 && mouse.currY <= this.halfHeight + 46 + 109)
             {
-                if (this.sett_img == images.sett)
+                if (this.jjin_img == images.mode_jjin)
                 {
 
                 }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 1;
-                    scene = 2;
-                    audios.bgm.start();
+                    changeScene(2);
+
                 }
                 this.jjin_img = images.mode_jjin_o;
             }
             else if (mouse.currY > this.halfHeight + 46 + 120 && mouse.currY <= this.halfHeight + 46 + 109 + 120)
             {
-                if (this.sett_img == images.sett)
+                if (this.sjjin_img == images.mode_sjjin)
                 {
-
                 }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 2;
-                    scene = 2;
+                    changeScene(2);
                     audios.bgm.start();
                 }
                 this.sjjin_img = images.mode_sjjin_o;
@@ -777,7 +788,10 @@ class LevelScene
         gfx.drawImage(images.chimha, 80, 600);
         gfx.drawImage(images.chimha, 380, 600);
         gfx.drawImage(images.chimha, 680, 600);
-        gfx.drawImage(images.level, (WIDTH - 800) / 2.0, 0);
+
+        gfx.font = "120px Independence_hall"
+        gfx.fillText("난이도", (WIDTH - 300) / 2.0, 180);
+
         gfx.drawImage(this.normal_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 120);
         gfx.drawImage(this.jjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
         gfx.drawImage(this.sjjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
@@ -788,17 +802,131 @@ class SettScene
 {
     constructor()
     {
+        this.barWidth = 300;
+        this.barHeight = 2;
 
+        this.barStart = (WIDTH - this.barWidth) / 2.0;
+
+        this.barHeightBase = HEIGHT / 2.0;
+        this.barGap = 50;
+
+        this.handleWidth = 10;
+        this.handleHeight = 30;
+        this.handle1 = volume;
+        this.handle2 = bgmVolume;
+
+        this.grab1 = false;
+        this.grab2 = false;
+
+        this.level_img = images.level;
+
+        this.btnStartX = (WIDTH - 360) / 2.0;
+        this.btnEndX = (WIDTH - 360) / 2.0 + 360;
+        this.halfHeight = HEIGHT / 2.0;
     }
 
     update()
     {
+        // console.log(mouse.currY);
 
+        if (currKeys.Escape && !lastKeys.Escape)
+        {
+            changeScene(lastScene);
+            return;
+        }
+
+        if (mouse.currX >= this.barStart && mouse.currX < this.barStart + this.barWidth)
+        {
+            if (mouse.currY >= this.barHeightBase - this.handleHeight / 2.0 && mouse.currY < this.barHeightBase + this.handleHeight / 2.0)
+            {
+                if (!mouse.last_down && mouse.curr_down)
+                    this.grab1 = true;
+
+            }
+
+            if (mouse.currY >= this.barHeightBase - this.handleHeight / 2.0 + this.barGap && mouse.currY < this.barHeightBase + this.handleHeight / 2.0 + this.barGap)
+            {
+                if (!mouse.last_down && mouse.curr_down)
+                    this.grab2 = true;
+
+            }
+        }
+
+        if (mouse.last_down && !mouse.curr_down)
+        {
+            this.grab1 = false;
+            this.grab2 = false;
+        }
+
+        if (this.grab1)
+        {
+            let per = (mouse.currX - this.barStart) / this.barWidth;
+
+            this.handle1 = Math.max(Math.min(per, 1.0), 0.0);
+            volume = this.handle1;
+        }
+        else if (this.grab2)
+        {
+            let per = (mouse.currX - this.barStart) / this.barWidth;
+
+            this.handle2 = Math.max(Math.min(per, 1.0), 0.0);
+            bgmVolume = this.handle2;
+        }
+
+        if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
+        {
+            if (mouse.currY > this.halfHeight + 46 + 100 && mouse.currY <= this.halfHeight + 46 + 100 + 109)
+            {
+                if (this.level_img == images.level)
+                {
+
+                }
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    changeScene(1);
+                }
+                this.level_img = images.level_o;
+            }
+            else
+            {
+                this.level_img = images.level;
+            }
+        }
+        else
+        {
+            this.level_img = images.level;
+        }
     }
 
     render()
     {
+        gfx.font = "120px Independence_hall"
+        gfx.fillText("설정", (WIDTH - 250) / 2.0, 180);
 
+        gfx.font = "28px Independence_hall"
+        gfx.fillText("효과음", this.barStart - 100, this.barHeightBase + this.handleWidth);
+        gfx.fillText("배경음", this.barStart - 100, this.barHeightBase + this.handleWidth + this.barGap);
+
+        gfx.beginPath();
+        gfx.rect(this.barStart, this.barHeightBase, this.barWidth, this.barHeight);
+        gfx.fill();
+        gfx.beginPath();
+        gfx.rect(this.barStart, this.barHeightBase + this.barGap, this.barWidth, this.barHeight);
+        gfx.fill();
+
+        // Render handles
+        gfx.beginPath();
+        gfx.rect(this.barStart + this.barWidth * this.handle1 - this.handleWidth / 2.0, this.barHeightBase + this.handleHeight / 2.0, this.handleWidth, -this.handleHeight);
+        gfx.fill();
+
+        gfx.beginPath();
+        gfx.rect(this.barStart + this.barWidth * this.handle2 - this.handleWidth / 2.0, this.barHeightBase + this.handleHeight / 2.0 + this.barGap, this.handleWidth, -this.handleHeight);
+        gfx.fill();
+
+        gfx.fillText(Math.trunc(this.handle1 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth);
+        gfx.fillText(Math.trunc(this.handle2 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth + this.barGap);
+
+        gfx.drawImage(this.level_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 100);
     }
 }
 
@@ -818,8 +946,8 @@ function init()
 
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))
     {
-        guideMsg = 'Touch bottom left, right side to move';
-        guideMsg2 = 'Touch top left, right, middle side to jump';
+        guideMsg = '상하좌우 화면을 터치해서 점프, 이동!';
+        guideMsg2 = '';
     }
 
     document.onkeydown = keyDown;
@@ -851,25 +979,25 @@ function init()
 
         if (pos.x < WIDTH / 2 && pos.y < HEIGHT / 2)
         {
-            keys.ArrowLeft = true;
+            currKeys.ArrowLeft = true;
         }
         else if (pos.x >= WIDTH / 2 && pos.y < HEIGHT / 2)
         {
-            keys.ArrowRight = true;
+            currKeys.ArrowRight = true;
         }
         else if (pos.x < WIDTH / 5 * 2 && pos.y >= HEIGHT / 2)
         {
-            keys[' '] = true;
-            keys.ArrowLeft = true;
+            currKeys[' '] = true;
+            currKeys.ArrowLeft = true;
         }
         else if (pos.x >= WIDTH / 5 * 3 && pos.y >= HEIGHT / 2)
         {
-            keys[' '] = true;
-            keys.ArrowRight = true;
+            currKeys[' '] = true;
+            currKeys.ArrowRight = true;
         }
         else if (pos.x >= WIDTH / 5 * 2 && pos.x < WIDTH / 5 * 3 && pos.y >= HEIGHT / 2)
         {
-            keys[' '] = true;
+            currKeys[' '] = true;
         }
 
         isTouch = true;
@@ -877,18 +1005,23 @@ function init()
 
     cvs.addEventListener('touchend', function (e)
     {
-        if (!keys[' '])
+        if (!currKeys[' '])
         {
-            keys.ArrowLeft = false;
-            keys.ArrowRight = false;
+            currKeys.ArrowLeft = false;
+            currKeys.ArrowRight = false;
         }
         else
-            keys[' '] = false;
+            currKeys[' '] = false;
     }, false);
 
     mute.addEventListener('click', function (e)
     {
         isMuted = !isMuted;
+
+        if (!isMuted)
+            audios.bgm.start();
+        else if (isMuted)
+            audios.bgm.pause();
     }, false);
 
     previousTime = new Date().getTime();
@@ -900,9 +1033,6 @@ function init()
     images.crouch = new Image();
     images.crouch.src = "./images/crouch.png";
     images.crouch.onload = function () { resourceLoaded++; };
-    images.title = new Image();
-    images.title.src = "./images/title.png";
-    images.title.onload = function () { resourceLoaded++; };
     images.wakdu = new Image();
     images.wakdu.src = "./images/wakdu.png";
     images.wakdu.onload = function () { resourceLoaded++; };
@@ -918,9 +1048,6 @@ function init()
     images.sett_o = new Image();
     images.sett_o.src = "./images/sett-o.png"
     images.sett_o.onload = function () { resourceLoaded++; };
-    images.level = new Image();
-    images.level.src = "./images/level.png"
-    images.level.onload = function () { resourceLoaded++; };
     images.mode_normal = new Image();
     images.mode_normal.src = "./images/mode_normal.png"
     images.mode_normal.onload = function () { resourceLoaded++; };
@@ -951,34 +1078,34 @@ function init()
     images.chimha = new Image();
     images.chimha.src = "./images/chimha.png"
     images.chimha.onload = function () { resourceLoaded++; };
+    images.level = new Image();
+    images.level.src = "./images/level.png"
+    images.level.onload = function () { resourceLoaded++; };
+    images.level_o = new Image();
+    images.level_o.src = "./images/level-o.png"
+    images.level_o.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
     audios.landing.src = "./audios/landing.wav";
-    audios.landing.volume = volume;
     audios.bounce = new Audio();
     audios.bounce.src = "./audios/bounce.wav";
-    audios.bounce.volume = volume;
     audios.jump = new Audio();
     audios.jump.src = "./audios/jump2.wav";
-    audios.jump.volume = volume;
     audios.bgm = new Audio();
     audios.bgm.src = "./audios/bgm.mp3";
-    audios.bgm.volume = bgmVolume;
     audios.bgm.addEventListener('ended', function () { this.currentTime = 0; this.play(); }, false);
     audios.ah1 = new Audio();
     audios.ah1.src = "./audios/ah1.ogg";
-    audios.ah1.volume = volume;
     audios.ah2 = new Audio();
     audios.ah2.src = "./audios/ah2.ogg";
-    audios.ah2.volume = volume;
     audios.ah3 = new Audio();
     audios.ah3.src = "./audios/ah3.ogg";
-    audios.ah3.volume = volume;
 
     audios.landing.start = function ()
     {
         if (isMuted) return;
+        audios.landing.volume = volume;
         audios.landing.pause();
         audios.landing.currentTime = 0;
         audios.landing.play();
@@ -986,6 +1113,7 @@ function init()
     audios.bounce.start = function ()
     {
         if (isMuted) return;
+        audios.bounce.volume = volume;
         audios.bounce.pause();
         audios.bounce.currentTime = 0;
         audios.bounce.play();
@@ -993,6 +1121,7 @@ function init()
     audios.jump.start = function ()
     {
         if (isMuted) return;
+        audios.jump.volume = volume;
         audios.jump.pause();
         audios.jump.currentTime = 0;
         audios.jump.play();
@@ -1000,6 +1129,7 @@ function init()
     audios.bgm.start = function ()
     {
         if (isMuted) return;
+        audios.bgm.volume = bgmVolume;
         audios.bgm.pause();
         audios.bgm.currentTime = 0;
         audios.bgm.play();
@@ -1007,6 +1137,7 @@ function init()
     audios.ah1.start = function ()
     {
         if (isMuted) return;
+        audios.ah1.volume = volume * 2.0;
         audios.ah1.pause();
         audios.ah1.currentTime = 0;
         audios.ah1.play();
@@ -1014,6 +1145,7 @@ function init()
     audios.ah2.start = function ()
     {
         if (isMuted) return;
+        audios.ah2.volume = volume * 2.0;
         audios.ah2.pause();
         audios.ah2.currentTime = 0;
         audios.ah2.play();
@@ -1021,6 +1153,7 @@ function init()
     audios.ah3.start = function ()
     {
         if (isMuted) return;
+        audios.ah3.volume = volume * 2.0;
         audios.ah3.pause();
         audios.ah3.currentTime = 0;
         audios.ah3.play();
@@ -1035,7 +1168,6 @@ function init()
 
     initLevels();
 }
-
 
 //Make game levels
 function initLevels()
@@ -1102,13 +1234,12 @@ function initLevels()
 
 function keyDown(e)
 {
-    keys[e.key] = true;
-    // console.log(e);
+    currKeys[e.key] = true;
 }
 
 function keyUp(e)
 {
-    keys[e.key] = false;
+    currKeys[e.key] = false;
 }
 
 function run(time)
@@ -1143,6 +1274,11 @@ function update(delta)
             }
         case 2:
             {
+                if (currKeys.Escape && !lastKeys.Escape)
+                {
+                    audios.bgm.pause();
+                    changeScene(3);
+                }
                 player.update(delta);
                 break;
             }
@@ -1158,6 +1294,8 @@ function update(delta)
     mouse.lastX = mouse.currX;
     mouse.lastY = mouse.currY;
     mouse.last_down = mouse.curr_down;
+
+    Object.assign(lastKeys, currKeys);
 }
 
 function render()
@@ -1204,24 +1342,66 @@ function render()
 
                 if (levelMax == 0)
                 {
-                    gfx.fillText("올라 가즈아~", 550, HEIGHT - 80);
-                    gfx.fillText(guideMsg, 550, HEIGHT - 45);
+                    gfx.font = "28px Independence_hall"
+                    gfx.fillText("올라 가즈아~↑", 20, 50);
+                    gfx.fillText(guideMsg, 550, HEIGHT - 65);
                     gfx.fillText(guideMsg2, 550, HEIGHT - 25);
                 }
                 if (level == 7)
                 {
-                    gfx.fillText("Goal!", 880, HEIGHT - 700);
+                    gfx.font = "28px Independence_hall"
+                    gfx.fillText("출구", 880, HEIGHT - 700);
                     gfx.fillText("↓", 890, HEIGHT - 680);
-                    gfx.fillText("Thanks for playing~", 810, HEIGHT - 550);
+                    gfx.fillText("앙 감사띠", 810, HEIGHT - 550);
                 }
                 break;
             }
         case 3:
             {
                 scenes.sett.render();
+                break;
             }
-            break;
     }
+}
+
+function changeScene(nextScene)
+{
+    lastScene = scene;
+    scene = nextScene;
+
+    if (scene == 2)
+    {
+        switch (gameMode)
+        {
+            case 0:
+                {
+                    break;
+                }
+            case 1:
+                {
+                    break;
+                }
+            case 2:
+                {
+                    break;
+                }
+        }
+
+        resetGame();
+        audios.bgm.start();
+    }
+    else if (lastScene == 2)
+    {
+        audios.bgm.pause();
+    }
+}
+
+function resetGame()
+{
+    player.x = 484;
+    player.y = 0;
+    levelMax = 0;
+    level = 0;
 }
 
 function drawWall(wall)
