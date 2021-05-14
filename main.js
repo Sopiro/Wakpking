@@ -1361,7 +1361,7 @@ function initLevels()
     blocks.push(new Block(2, new AABB(540, 400, 100, 55)));
     blocks.push(new Block(2, new AABB(800, 480, 120, 120)));
 
-    blocks.push(new Block(3, new AABB(460, 10, 320, 34)));
+    blocks.push(new Block(3, new AABB(460, 34, 260, 34)));
     blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
     // walls.push(new Wall(3, 300, 280, 0, -34));
     // walls.push(new Wall(3, 300, 400, 0, -34));
