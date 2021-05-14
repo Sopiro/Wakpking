@@ -9,7 +9,8 @@ const HEIGHT = 800;
 let volume = 0.3;
 let bgmVolume = 0.3;
 let guideMsg = '[←, →]로 움직이고 [space]로 점프';
-let guideMsg2 = 'Esc 누르면 설정창';
+let guideMsg2 = '[↑]로 체크포인트 먹고 [↓]로 설치';
+let guideMsg3 = 'Esc 누르면 설정창';
 let isMuted = false;
 let isTouch = false;
 
@@ -19,7 +20,7 @@ let currentTime = 0;
 let passedTime = 0;
 let msPerFrame = 1000.0 / 144.0;
 
-const numResource = 19;
+const numResource = 23;
 let resourceLoaded = 0;
 
 let images = {};
@@ -225,6 +226,14 @@ class Block
     }
 }
 
+class CheckPoint
+{
+    constructor()
+    {
+
+    }
+}
+
 class Player
 {
     constructor(x, y)
@@ -244,6 +253,14 @@ class Player
 
         this.lastHeight = 0;
         this.numJumps = 0;
+        this.numFalls = 0;
+
+        this.ckptPosInit = new Vector(100, 0);
+        this.ckptPos = new Vector(100, 0);
+        this.portalPos = new Vector(900, 0);
+        this.grabCkpt = false;
+
+        this.angleAABB = new AABB(50, HEIGHT * 8 + 300, 100, 125);
     }
 
     aabb()
@@ -308,7 +325,10 @@ class Player
 
         audios.landing.start();
         if (gap >= 300)
+        {
+            this.numFalls++;
             this.playRandomHurtSound();
+        }
 
     }
 
@@ -427,6 +447,50 @@ class Player
                 this.reponseCollide(c);
         }
 
+        if (gameMode >= 2)
+        {
+            if (this.onGround && this.grabCkpt)
+            {
+                if (currKeys.ArrowDown && !lastKeys.ArrowDown)
+                {
+                    audios.omat.start();
+                    this.grabCkpt = false;
+                    this.ckptPos.x = this.x;
+                    this.ckptPos.y = this.y;
+                }
+            }
+
+            let testAABB = new AABB(this.ckptPos.x, this.ckptPos.y, this.rs, this.rs);
+
+            if (testAABB.checkCollideBox(this.aabb()).collide && !this.grabCkpt)
+            {
+                if (currKeys.ArrowUp && !lastKeys.ArrowUp)
+                {
+                    audios.um.start();
+                    this.grabCkpt = true;
+                }
+            }
+
+            testAABB = new AABB(this.portalPos.x, this.portalPos.y, this.rs, this.rs);
+
+            if (testAABB.checkCollideBox(this.aabb()).collide && !this.grabCkpt)
+            {
+                if (currKeys.ArrowUp && !lastKeys.ArrowUp)
+                {
+                    audios.tp.start();
+                    this.x = this.ckptPos.x;
+                    this.y = this.ckptPos.y;
+                    this.ckptPos.x = this.ckptPosInit.x;
+                    this.ckptPos.y = this.ckptPosInit.y;
+                }
+            }
+        }
+
+        // EndGame
+        if (this.angleAABB.checkCollidePoint(this.x + this.size / 2.0, this.y + this.size / 2.0))
+        {
+            changeScene(4);
+        }
     }
 
     testCollide(nvx, nvy)
@@ -609,6 +673,19 @@ class Player
 
     render()
     {
+        if (gameMode >= 2)
+        {
+            if (!this.grabCkpt)
+            {
+                gfx.drawImage(images.chimha, this.ckptPos.x - this.rs / 4.0, HEIGHT - (this.ckptPos.y - HEIGHT * level), this.rs, -this.rs);
+                gfx.drawImage(images.portal_on, this.portalPos.x, HEIGHT - (this.portalPos.y - HEIGHT * level), this.rs * 3 / 4, -this.rs);
+            }
+            else
+            {
+                gfx.drawImage(images.portal_off, this.portalPos.x, HEIGHT - (this.portalPos.y - HEIGHT * level), this.rs * 3 / 4, -this.rs);
+            }
+        }
+
         gfx.save();
         gfx.translate(this.x - 16, HEIGHT - this.rs - this.y + level * HEIGHT)
         gfx.scale(1 * this.dir, 1);
@@ -764,7 +841,6 @@ class LevelScene
                 {
                     gameMode = 2;
                     changeScene(2);
-                    audios.bgm.start();
                 }
                 this.sjjin_img = images.mode_sjjin_o;
             }
@@ -930,6 +1006,50 @@ class SettScene
     }
 }
 
+class EndScene
+{
+    constructor()
+    {
+
+    }
+
+    start()
+    {
+        this.time = 0;
+        this.engelPos = new Vector(50, 300)
+    }
+
+    update()
+    {
+        this.engelPos.y = 300 + Math.sin(this.time / 100.0) * 80 + this.time / 2;
+        this.engelPos.x = 50 + this.time
+        this.time++;
+    }
+
+    render()
+    {
+        gfx.fillStyle = "#F7FEFF";
+        gfx.rect(0, 0, WIDTH, HEIGHT);
+        gfx.fill();
+        gfx.fillStyle = "#000000";
+
+        gfx.drawImage(images.angel, this.engelPos.x, HEIGHT - this.engelPos.y, 100, -125);
+        gfx.fillStyle = "hotpink";
+        gfx.font = "114px Independence_hall"
+        gfx.fillText("♥", 45 + this.time, HEIGHT - (230 + Math.sin(this.time / 100.0) * 80 + this.time / 2));
+        gfx.fillStyle = "#000000";
+
+        let per = Math.max(Math.min(this.time - 700, 400.0), 0.0) / 400.0;
+
+        gfx.globalAlpha = per;
+        gfx.font = "64px Independence_hall"
+        gfx.fillText("플레이해주셔서 감사합니다!", WIDTH / 2.0 - 350, HEIGHT / 2.0);
+        gfx.font = "32px Independence_hall"
+        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 320, HEIGHT / 2.0 + 60);
+        gfx.globalAlpha = 1.0;
+    }
+}
+
 window.onload = function ()
 {
     init();
@@ -1084,6 +1204,18 @@ function init()
     images.level_o = new Image();
     images.level_o.src = "./images/level-o.png"
     images.level_o.onload = function () { resourceLoaded++; };
+    images.portal_off = new Image();
+    images.portal_off.src = "./images/portal-off.png"
+    images.portal_off.onload = function () { resourceLoaded++; };
+    images.portal_on = new Image();
+    images.portal_on.src = "./images/portal-on.png"
+    images.portal_on.onload = function () { resourceLoaded++; };
+    images.floor3 = new Image();
+    images.floor3.src = "./images/floor3.png"
+    images.floor3.onload = function () { resourceLoaded++; };
+    images.angel = new Image();
+    images.angel.src = "./images/angel.png"
+    images.angel.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
@@ -1101,12 +1233,19 @@ function init()
     audios.ah2.src = "./audios/ah2.ogg";
     audios.ah3 = new Audio();
     audios.ah3.src = "./audios/ah3.ogg";
+    audios.okgo = new Audio();
+    audios.okgo.src = "./audios/okgo.ogg";
+    audios.um = new Audio();
+    audios.um.src = "./audios/um.ogg";
+    audios.tp = new Audio();
+    audios.tp.src = "./audios/tp.ogg";
+    audios.omat = new Audio();
+    audios.omat.src = "./audios/omat.ogg";
 
     audios.landing.start = function ()
     {
         if (isMuted) return;
         audios.landing.volume = volume;
-        audios.landing.pause();
         audios.landing.currentTime = 0;
         audios.landing.play();
     };
@@ -1114,7 +1253,6 @@ function init()
     {
         if (isMuted) return;
         audios.bounce.volume = volume;
-        audios.bounce.pause();
         audios.bounce.currentTime = 0;
         audios.bounce.play();
     };
@@ -1122,7 +1260,6 @@ function init()
     {
         if (isMuted) return;
         audios.jump.volume = volume;
-        audios.jump.pause();
         audios.jump.currentTime = 0;
         audios.jump.play();
     };
@@ -1130,7 +1267,6 @@ function init()
     {
         if (isMuted) return;
         audios.bgm.volume = bgmVolume;
-        audios.bgm.pause();
         audios.bgm.currentTime = 0;
         audios.bgm.play();
     };
@@ -1138,7 +1274,6 @@ function init()
     {
         if (isMuted) return;
         audios.ah1.volume = volume * 2.0;
-        audios.ah1.pause();
         audios.ah1.currentTime = 0;
         audios.ah1.play();
     };
@@ -1146,7 +1281,6 @@ function init()
     {
         if (isMuted) return;
         audios.ah2.volume = volume * 2.0;
-        audios.ah2.pause();
         audios.ah2.currentTime = 0;
         audios.ah2.play();
     };
@@ -1154,9 +1288,36 @@ function init()
     {
         if (isMuted) return;
         audios.ah3.volume = volume * 2.0;
-        audios.ah3.pause();
         audios.ah3.currentTime = 0;
         audios.ah3.play();
+    };
+    audios.okgo.start = function ()
+    {
+        if (isMuted) return;
+        audios.okgo.volume = volume * 2.0;
+        audios.okgo.currentTime = 0;
+        audios.okgo.play();
+    };
+    audios.um.start = function ()
+    {
+        if (isMuted) return;
+        audios.um.volume = volume * 2.0;
+        audios.um.currentTime = 0;
+        audios.um.play();
+    };
+    audios.tp.start = function ()
+    {
+        if (isMuted) return;
+        audios.tp.volume = volume;
+        audios.tp.currentTime = 0;
+        audios.tp.play();
+    };
+    audios.omat.start = function ()
+    {
+        if (isMuted) return;
+        audios.omat.volume = volume;
+        audios.omat.currentTime = 0;
+        audios.omat.play();
     };
 
     player = new Player((WIDTH - 32) / 2.0, 0);
@@ -1165,6 +1326,7 @@ function init()
     scenes.main = new MainScene();
     scenes.level = new LevelScene();
     scenes.sett = new SettScene();
+    scenes.end = new EndScene();
 
     initLevels();
 }
@@ -1230,6 +1392,8 @@ function initLevels()
     blocks.push(new Block(7, new AABB(520, 430, 46, 34)));
     blocks.push(new Block(7, new AABB(877, 600, 46, 34)));
     walls.push(new Wall(7, 715, 430, 0, 300));
+
+    blocks.push(new Block(8, new AABB(0, 150, 500, 34)));
 }
 
 function keyDown(e)
@@ -1287,6 +1451,11 @@ function update(delta)
                 scenes.sett.update();
                 break;
             }
+        case 4:
+            {
+                scenes.end.update();
+                break;
+            }
     }
 
     mouse.dx = mouse.currX - mouse.lastX;
@@ -1319,10 +1488,25 @@ function render()
             }
         case 2:
             {
-                if (level == 0)
-                    gfx.drawImage(images.floor1, 0, 0);
-                else
-                    gfx.drawImage(images.floor2, 0, 0);
+                switch (level)
+                {
+                    case 0:
+                        gfx.drawImage(images.floor1, 0, 0);
+                        break;
+
+                    case 7:
+                        gfx.drawImage(images.floor3, 0, 0);
+                        break;
+                    case 8:
+                        gfx.fillStyle = "#F7FEFF";
+                        gfx.rect(0, 0, WIDTH, HEIGHT);
+                        gfx.fill();
+                        gfx.fillStyle = "#000000";
+                        break;
+                    default:
+                        gfx.drawImage(images.floor2, 0, 0);
+                        break;
+                }
 
                 player.render();
 
@@ -1344,21 +1528,32 @@ function render()
                 {
                     gfx.font = "28px Independence_hall"
                     gfx.fillText("올라 가즈아~↑", 20, 50);
-                    gfx.fillText(guideMsg, 550, HEIGHT - 65);
-                    gfx.fillText(guideMsg2, 550, HEIGHT - 25);
+                    gfx.fillText(guideMsg, 550, HEIGHT - 145);
+                    gfx.fillText(guideMsg2, 550, HEIGHT - 105);
+                    gfx.fillText(guideMsg3, 550, HEIGHT - 65);
                 }
                 if (level == 7)
                 {
                     gfx.font = "28px Independence_hall"
-                    gfx.fillText("출구", 880, HEIGHT - 700);
-                    gfx.fillText("↓", 890, HEIGHT - 680);
-                    gfx.fillText("앙 감사띠", 810, HEIGHT - 550);
+                    gfx.fillText("/구해줘!\\", 100, HEIGHT - 750);
+                } else if (level == 8)
+                {
+                    gfx.drawImage(images.angel, 50, HEIGHT - 300, 100, -125);
+                    gfx.fillStyle = "hotpink";
+                    gfx.font = "114px Independence_hall"
+                    gfx.fillText("♥", 45, HEIGHT - 230);
+                    gfx.fillStyle = "#000000";
                 }
                 break;
             }
         case 3:
             {
                 scenes.sett.render();
+                break;
+            }
+        case 4:
+            {
+                scenes.end.render();
                 break;
             }
     }
@@ -1369,7 +1564,7 @@ function changeScene(nextScene)
     lastScene = scene;
     scene = nextScene;
 
-    if (scene == 2)
+    if (nextScene == 2)
     {
         switch (gameMode)
         {
@@ -1388,11 +1583,16 @@ function changeScene(nextScene)
         }
 
         resetGame();
+        audios.okgo.start();
         audios.bgm.start();
     }
-    else if (lastScene == 2)
+    if (lastScene == 2 && nextScene != 4)
     {
         audios.bgm.pause();
+    }
+    if (nextScene == 4)
+    {
+        scenes.end.start();
     }
 }
 
@@ -1402,6 +1602,11 @@ function resetGame()
     player.y = 0;
     levelMax = 0;
     level = 0;
+    if (gameMode != 2)
+    {
+        guideMsg2 = guideMsg3;
+        guideMsg3 = "";
+    }
 }
 
 function drawWall(wall)
