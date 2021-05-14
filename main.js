@@ -20,7 +20,7 @@ let currentTime = 0;
 let passedTime = 0;
 let msPerFrame = 1000.0 / 144.0;
 
-const numResource = 23;
+const numResource = 25;
 let resourceLoaded = 0;
 
 let images = {};
@@ -794,6 +794,7 @@ class LevelScene
 {
     constructor()
     {
+        this.hard_img = images.mode_hard;
         this.normal_img = images.mode_normal;
         this.jjin_img = images.mode_jjin;
         this.sjjin_img = images.mode_sjjin;
@@ -812,12 +813,17 @@ class LevelScene
 
         if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
         {
-            if (mouse.currY > this.halfHeight + 46 - 120 && mouse.currY <= this.halfHeight + 46 + 109 - 120)
+            if (mouse.currY > this.halfHeight + 46 - 240 && mouse.currY <= this.halfHeight + 46 + 109 - 240)
             {
-                if (this.normal_img == images.mode_normal)
+                if (!mouse.curr_down && mouse.last_down)
                 {
-
+                    gameMode = -1;
+                    changeScene(2);
                 }
+                this.hard_img = images.mode_hard_o;
+            }
+            else if (mouse.currY > this.halfHeight + 46 - 120 && mouse.currY <= this.halfHeight + 46 + 109 - 120)
+            {
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 0;
@@ -827,10 +833,6 @@ class LevelScene
             }
             else if (mouse.currY > this.halfHeight + 46 && mouse.currY <= this.halfHeight + 46 + 109)
             {
-                if (this.jjin_img == images.mode_jjin)
-                {
-
-                }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 1;
@@ -841,9 +843,6 @@ class LevelScene
             }
             else if (mouse.currY > this.halfHeight + 46 + 120 && mouse.currY <= this.halfHeight + 46 + 109 + 120)
             {
-                if (this.sjjin_img == images.mode_sjjin)
-                {
-                }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     gameMode = 2;
@@ -853,6 +852,7 @@ class LevelScene
             }
             else
             {
+                this.hard_img = images.mode_hard;
                 this.normal_img = images.mode_normal;
                 this.jjin_img = images.mode_jjin;
                 this.sjjin_img = images.mode_sjjin;
@@ -875,6 +875,7 @@ class LevelScene
         gfx.font = "120px Independence_hall"
         gfx.fillText("난이도", (WIDTH - 300) / 2.0, 180);
 
+        gfx.drawImage(this.hard_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 240);
         gfx.drawImage(this.normal_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 120);
         gfx.drawImage(this.jjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
         gfx.drawImage(this.sjjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
@@ -1184,6 +1185,12 @@ function init()
     images.mode_normal_o = new Image();
     images.mode_normal_o.src = "./images/mode_normal-o.png"
     images.mode_normal_o.onload = function () { resourceLoaded++; };
+    images.mode_hard = new Image();
+    images.mode_hard.src = "./images/mode_hard.png"
+    images.mode_hard.onload = function () { resourceLoaded++; };
+    images.mode_hard_o = new Image();
+    images.mode_hard_o.src = "./images/mode_hard-o.png"
+    images.mode_hard_o.onload = function () { resourceLoaded++; };
     images.mode_jjin = new Image();
     images.mode_jjin.src = "./images/mode_jjin.png"
     images.mode_jjin.onload = function () { resourceLoaded++; };
@@ -1337,71 +1344,138 @@ function init()
     scenes.level = new LevelScene();
     scenes.sett = new SettScene();
     scenes.end = new EndScene();
-
-    initLevels();
 }
 
 //Make game levels
 function initLevels()
 {
-    blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
-    blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
-    blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
-    blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
-    blocks.push(new Block(0, new AABB(0, 620, 100, 34)));
+    blocks = [];
+    walls = [];
 
-    walls.push(new Wall(1, 200, 100, 0, 200));
-    blocks.push(new Block(1, new AABB(0, 200, 48, 34)));
-    blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
-    blocks.push(new Block(1, new AABB(860, 200, 140, 34)));
-    blocks.push(new Block(1, new AABB(670, 570, 180, 90)));
+    if (gameMode == -1)
+    {
+        blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
+        blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
+        blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
+        blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
+        blocks.push(new Block(0, new AABB(70, 620, 50, 34)));
 
-    blocks.push(new Block(2, new AABB(130, 10, 100, 45)));
-    blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
-    blocks.push(new Block(2, new AABB(540, 400, 100, 55)));
-    blocks.push(new Block(2, new AABB(800, 480, 120, 120)));
+        walls.push(new Wall(1, 200, 100, 0, 200));
+        blocks.push(new Block(1, new AABB(0, 200, 48, 34)));
+        blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
+        blocks.push(new Block(1, new AABB(860, 200, 60, 34)));
+        blocks.push(new Block(1, new AABB(670, 570, 180, 90)));
 
-    blocks.push(new Block(3, new AABB(460, 34, 260, 34)));
-    blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
-    // walls.push(new Wall(3, 300, 280, 0, -34));
-    // walls.push(new Wall(3, 300, 400, 0, -34));
-    walls.push(new Wall(3, 300, 400, -50, 150));
-    walls.push(new Wall(3, 300, 246, -50, -150));
-    walls.push(new Wall(3, 480, 550, 100, -15));
-    walls.push(new Wall(3, 680, 520, 100, -15));
-    blocks.push(new Block(3, new AABB(890, 450, 110, 34)));
+        blocks.push(new Block(2, new AABB(130, 10, 100, 45)));
+        blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
+        blocks.push(new Block(2, new AABB(540, 400, 60, 180)));
+        blocks.push(new Block(2, new AABB(800, 480, 60, 180)));
 
-    blocks.push(new Block(4, new AABB(390, 10, 90, 34)));
-    blocks.push(new Block(4, new AABB(90, 20, 120, 50)));
-    blocks.push(new Block(4, new AABB(400, 300, 51, 200)));
-    blocks.push(new Block(4, new AABB(510, 280, 51, 200)));
-    blocks.push(new Block(4, new AABB(850, 615, 56, 85)));
+        blocks.push(new Block(3, new AABB(460, 10, 110, 34)));
+        blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
+        walls.push(new Wall(3, 300, 280, 0, -34));
+        walls.push(new Wall(3, 300, 400, 0, -34));
+        walls.push(new Wall(3, 300, 400, -50, 150));
+        walls.push(new Wall(3, 300, 246, -50, -150));
+        walls.push(new Wall(3, 480, 550, 100, -15));
+        walls.push(new Wall(3, 680, 520, 100, -15));
+        blocks.push(new Block(3, new AABB(890, 450, 54, 34)));
 
-    blocks.push(new Block(5, new AABB(700, 200, 120, 55)));
-    walls.push(new Wall(5, 340, 600, 0, -100));
-    walls.push(new Wall(5, 530, 400, 0, -240));
-    blocks.push(new Block(5, new AABB(410, 160, 120, 34)));
-    blocks.push(new Block(5, new AABB(50, 160, 80, 34)));
-    blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
-    blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
-    walls.push(new Wall(5, 87, 680, 50, 50));
+        blocks.push(new Block(4, new AABB(390, 10, 90, 34)));
+        blocks.push(new Block(4, new AABB(90, 20, 45, 200)));
+        blocks.push(new Block(4, new AABB(510, 380, 45, 200)));
+        blocks.push(new Block(4, new AABB(850, 715, 45, 85)));
 
-    walls.push(new Wall(6, 200, 280, 50, -50));
-    blocks.push(new Block(6, new AABB(50, 130, 80, 34)));
-    walls.push(new Wall(6, 310, 380, 50, 50));
-    blocks.push(new Block(6, new AABB(330, 130, 80, 34)));
-    blocks.push(new Block(6, new AABB(410, 130, 34, 200)));
-    walls.push(new Wall(6, 680, 140, 70, 0));
-    blocks.push(new Block(6, new AABB(908, 245, 54, 34)));
-    blocks.push(new Block(6, new AABB(515, 540, 120, 34)));
-    blocks.push(new Block(6, new AABB(50, 650, 100, 34)));
+        blocks.push(new Block(5, new AABB(850, 0, 45, 65)));
+        blocks.push(new Block(5, new AABB(800, 200, 99, 34)));
+        walls.push(new Wall(5, 480, 500, 50, -100));
+        walls.push(new Wall(5, 390, 500, -50, -100));
+        walls.push(new Wall(5, 340, 400, 0, -140));
+        walls.push(new Wall(5, 530, 400, 0, -240));
+        blocks.push(new Block(5, new AABB(340, 160, 190, 34)));
+        blocks.push(new Block(5, new AABB(50, 160, 80, 34)));
+        blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+        blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+        walls.push(new Wall(5, 87, 680, 50, 50));
 
-    blocks.push(new Block(7, new AABB(120, 300, 100, 34)));
-    blocks.push(new Block(7, new AABB(520, 430, 46, 34)));
-    blocks.push(new Block(7, new AABB(877, 600, 46, 34)));
-    walls.push(new Wall(7, 715, 430, 0, 300));
+        walls.push(new Wall(6, 200, 280, 50, -50));
+        blocks.push(new Block(6, new AABB(50, 130, 80, 34)));
+        walls.push(new Wall(6, 310, 380, 50, 50));
+        blocks.push(new Block(6, new AABB(330, 130, 80, 34)));
+        blocks.push(new Block(6, new AABB(410, 130, 34, 200)));
+        walls.push(new Wall(6, 700, 140, 50, 0));
+        blocks.push(new Block(6, new AABB(908, 265, 34, 34)));
+        blocks.push(new Block(6, new AABB(555, 444, 34, 200)));
+        blocks.push(new Block(6, new AABB(50, 650, 100, 34)));
 
-    blocks.push(new Block(8, new AABB(0, 150, 500, 34)));
+        blocks.push(new Block(7, new AABB(100, 300, 100, 34)));
+        blocks.push(new Block(7, new AABB(520, 430, 46, 34)));
+        blocks.push(new Block(7, new AABB(877, 600, 46, 34)));
+        walls.push(new Wall(7, 715, 430, 0, 300));
+
+        blocks.push(new Block(8, new AABB(0, 150, 500, 34)));
+    }
+    else
+    {
+        blocks.push(new Block(0, new AABB(100, 100, 150, 34)));
+        blocks.push(new Block(0, new AABB(330, 230, 150, 34)));
+        blocks.push(new Block(0, new AABB(710, 410, 116, 34)));
+        blocks.push(new Block(0, new AABB(330, 660, 150, 34)));
+        blocks.push(new Block(0, new AABB(0, 620, 100, 34)));
+
+        walls.push(new Wall(1, 200, 100, 0, 200));
+        blocks.push(new Block(1, new AABB(0, 200, 48, 34)));
+        blocks.push(new Block(1, new AABB(530, 200, 60, 34)));
+        blocks.push(new Block(1, new AABB(860, 200, 140, 34)));
+        blocks.push(new Block(1, new AABB(670, 570, 180, 90)));
+
+        blocks.push(new Block(2, new AABB(130, 10, 100, 45)));
+        blocks.push(new Block(2, new AABB(130, 300, 100, 45)));
+        blocks.push(new Block(2, new AABB(540, 400, 100, 55)));
+        blocks.push(new Block(2, new AABB(800, 480, 120, 120)));
+
+        blocks.push(new Block(3, new AABB(460, 34, 260, 34)));
+        blocks.push(new Block(3, new AABB(46, 236, 100, 34)));
+        // walls.push(new Wall(3, 300, 280, 0, -34));
+        // walls.push(new Wall(3, 300, 400, 0, -34));
+        walls.push(new Wall(3, 300, 400, -50, 150));
+        walls.push(new Wall(3, 300, 246, -50, -150));
+        walls.push(new Wall(3, 480, 550, 100, -15));
+        walls.push(new Wall(3, 680, 520, 100, -15));
+        blocks.push(new Block(3, new AABB(890, 450, 110, 34)));
+
+        blocks.push(new Block(4, new AABB(390, 10, 90, 34)));
+        blocks.push(new Block(4, new AABB(90, 20, 120, 50)));
+        blocks.push(new Block(4, new AABB(400, 300, 51, 200)));
+        blocks.push(new Block(4, new AABB(510, 280, 51, 200)));
+        blocks.push(new Block(4, new AABB(850, 615, 56, 85)));
+
+        blocks.push(new Block(5, new AABB(700, 200, 120, 55)));
+        walls.push(new Wall(5, 340, 600, 0, -100));
+        walls.push(new Wall(5, 530, 400, 0, -240));
+        blocks.push(new Block(5, new AABB(410, 160, 120, 34)));
+        blocks.push(new Block(5, new AABB(50, 160, 80, 34)));
+        blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+        blocks.push(new Block(5, new AABB(160, 600, 80, 34)));
+        walls.push(new Wall(5, 87, 680, 50, 50));
+
+        walls.push(new Wall(6, 200, 280, 50, -50));
+        blocks.push(new Block(6, new AABB(50, 130, 80, 34)));
+        walls.push(new Wall(6, 310, 380, 50, 50));
+        blocks.push(new Block(6, new AABB(330, 130, 80, 34)));
+        blocks.push(new Block(6, new AABB(410, 130, 34, 200)));
+        walls.push(new Wall(6, 680, 140, 70, 0));
+        blocks.push(new Block(6, new AABB(908, 245, 54, 34)));
+        blocks.push(new Block(6, new AABB(515, 540, 120, 34)));
+        blocks.push(new Block(6, new AABB(50, 650, 100, 34)));
+
+        blocks.push(new Block(7, new AABB(120, 300, 100, 34)));
+        blocks.push(new Block(7, new AABB(520, 430, 46, 34)));
+        blocks.push(new Block(7, new AABB(877, 600, 46, 34)));
+        walls.push(new Wall(7, 715, 430, 0, 300));
+
+        blocks.push(new Block(8, new AABB(0, 150, 500, 34)));
+    }
 }
 
 function keyDown(e)
@@ -1574,22 +1648,6 @@ function changeScene(nextScene)
 
     if (nextScene == 2)
     {
-        switch (gameMode)
-        {
-            case 0:
-                {
-                    break;
-                }
-            case 1:
-                {
-                    break;
-                }
-            case 2:
-                {
-                    break;
-                }
-        }
-
         resetGame();
         audios.okgo.start();
         audios.bgm.start();
@@ -1606,6 +1664,8 @@ function changeScene(nextScene)
 
 function resetGame()
 {
+    initLevels();
+
     guideMsg = '[←, →]로 움직이고 [space]로 점프';
     guideMsg2 = '[↑]로 체크포인트 먹고 [↓]로 설치';
     guideMsg3 = 'Esc 누르면 설정창';
