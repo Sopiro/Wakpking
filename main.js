@@ -1045,7 +1045,10 @@ class EndScene
         gfx.font = "64px Independence_hall"
         gfx.fillText("플레이해주셔서 감사합니다!", WIDTH / 2.0 - 350, HEIGHT / 2.0);
         gfx.font = "32px Independence_hall"
-        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 320, HEIGHT / 2.0 + 60);
+        gfx.fillText("총 점프 횟수: " + player.numJumps, WIDTH / 2.0 - 110, HEIGHT / 2.0 + 80);
+        gfx.fillText("총 낙하 횟수: " + player.numFalls, WIDTH / 2.0 - 110, HEIGHT / 2.0 + 120);
+        gfx.font = "28px Independence_hall"
+        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 290, HEIGHT / 2.0 + 300);
         gfx.globalAlpha = 1.0;
     }
 }
