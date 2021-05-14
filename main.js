@@ -1447,7 +1447,7 @@ function initLevels()
         blocks.push(new Block(4, new AABB(390, 10, 90, 34)));
         blocks.push(new Block(4, new AABB(90, 20, 120, 50)));
         blocks.push(new Block(4, new AABB(400, 300, 51, 200)));
-        blocks.push(new Block(4, new AABB(510, 280, 51, 200)));
+        blocks.push(new Block(4, new AABB(520, 280, 51, 200)));
         blocks.push(new Block(4, new AABB(850, 615, 56, 85)));
 
         blocks.push(new Block(5, new AABB(700, 200, 120, 55)));
