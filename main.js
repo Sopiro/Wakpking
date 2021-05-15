@@ -20,7 +20,7 @@ let currentTime = 0;
 let passedTime = 0;
 let msPerFrame = 1000.0 / 144.0;
 
-const numResource = 25;
+const numResource = 27;
 let resourceLoaded = 0;
 
 let images = {};
@@ -801,7 +801,7 @@ class LevelScene
 
         this.btnStartX = (WIDTH - 360) / 2.0;
         this.btnEndX = (WIDTH - 360) / 2.0 + 360;
-        this.halfHeight = HEIGHT / 2.0;
+        this.heightBase = HEIGHT / 2.0 + 30;
     }
 
     update(time)
@@ -813,7 +813,7 @@ class LevelScene
 
         if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
         {
-            if (mouse.currY > this.halfHeight + 46 - 240 && mouse.currY <= this.halfHeight + 46 + 109 - 240)
+            if (mouse.currY > this.heightBase + 46 - 240 && mouse.currY <= this.heightBase + 46 + 109 - 240)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -822,7 +822,7 @@ class LevelScene
                 }
                 this.hard_img = images.mode_hard_o;
             }
-            else if (mouse.currY > this.halfHeight + 46 - 120 && mouse.currY <= this.halfHeight + 46 + 109 - 120)
+            else if (mouse.currY > this.heightBase + 46 - 120 && mouse.currY <= this.heightBase + 46 + 109 - 120)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -831,7 +831,7 @@ class LevelScene
                 }
                 this.normal_img = images.mode_normal_o;
             }
-            else if (mouse.currY > this.halfHeight + 46 && mouse.currY <= this.halfHeight + 46 + 109)
+            else if (mouse.currY > this.heightBase + 46 && mouse.currY <= this.heightBase + 46 + 109)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -841,7 +841,7 @@ class LevelScene
                 }
                 this.jjin_img = images.mode_jjin_o;
             }
-            else if (mouse.currY > this.halfHeight + 46 + 120 && mouse.currY <= this.halfHeight + 46 + 109 + 120)
+            else if (mouse.currY > this.heightBase + 46 + 120 && mouse.currY <= this.heightBase + 46 + 109 + 120)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -873,12 +873,14 @@ class LevelScene
         gfx.drawImage(images.chimha, 680, 600);
 
         gfx.font = "120px Independence_hall"
-        gfx.fillText("난이도", (WIDTH - 300) / 2.0, 180);
+        gfx.fillText("난이도", (WIDTH - 300) / 2.0, 160);
 
-        gfx.drawImage(this.hard_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 240);
-        gfx.drawImage(this.normal_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 - 120);
-        gfx.drawImage(this.jjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0);
-        gfx.drawImage(this.sjjin_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 120);
+        const renderStart = (WIDTH - 435) / 2.0;
+
+        gfx.drawImage(this.hard_img, renderStart, this.heightBase - 240);
+        gfx.drawImage(this.normal_img, renderStart, this.heightBase - 120);
+        gfx.drawImage(this.jjin_img, renderStart, this.heightBase);
+        gfx.drawImage(this.sjjin_img, renderStart, this.heightBase + 120);
     }
 }
 
@@ -891,7 +893,7 @@ class SettScene
 
         this.barStart = (WIDTH - this.barWidth) / 2.0;
 
-        this.barHeightBase = HEIGHT / 2.0;
+        this.barHeightBase = HEIGHT / 2.0 - 100;
         this.barGap = 50;
 
         this.handleWidth = 10;
@@ -903,10 +905,11 @@ class SettScene
         this.grab2 = false;
 
         this.level_img = images.level;
+        this.goback_img = images.goback;
 
         this.btnStartX = (WIDTH - 360) / 2.0;
         this.btnEndX = (WIDTH - 360) / 2.0 + 360;
-        this.halfHeight = HEIGHT / 2.0;
+        this.btnHeightBase = HEIGHT / 2.0 - 100;
     }
 
     update()
@@ -959,26 +962,32 @@ class SettScene
 
         if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
         {
-            if (mouse.currY > this.halfHeight + 46 + 100 && mouse.currY <= this.halfHeight + 46 + 100 + 109)
+            if (mouse.currY > this.btnHeightBase + 46 + 100 && mouse.currY <= this.btnHeightBase + 46 + 100 + 109)
             {
-                if (this.level_img == images.level)
-                {
-
-                }
                 if (!mouse.curr_down && mouse.last_down)
                 {
                     changeScene(1);
                 }
                 this.level_img = images.level_o;
             }
+            else if (mouse.currY > this.btnHeightBase + 46 + 100 + 120 && mouse.currY <= this.btnHeightBase + 46 + 100 + 109 + 120)
+            {
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    changeScene(lastScene);
+                }
+                this.goback_img = images.goback_o;
+            }
             else
             {
                 this.level_img = images.level;
+                this.goback_img = images.goback;
             }
         }
         else
         {
             this.level_img = images.level;
+            this.goback_img = images.goback;
         }
     }
 
@@ -1010,7 +1019,8 @@ class SettScene
         gfx.fillText(Math.trunc(this.handle1 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth);
         gfx.fillText(Math.trunc(this.handle2 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth + this.barGap);
 
-        gfx.drawImage(this.level_img, (WIDTH - 435) / 2.0, HEIGHT / 2.0 + 100);
+        gfx.drawImage(this.level_img, (WIDTH - 435) / 2.0, this.btnHeightBase + 100);
+        gfx.drawImage(this.goback_img, (WIDTH - 435) / 2.0, this.btnHeightBase + 100 + 120);
     }
 }
 
@@ -1025,6 +1035,14 @@ class EndScene
     {
         this.time = 0;
         this.engelPos = new Vector(50, 300)
+
+        let total = Math.trunc(performance.now() / 1000.0);
+
+        this.hour = Math.trunc(total / 3600.0);
+        total -= 3600 * this.hour;
+        this.min = Math.trunc(total / 60.0);
+        total -= 60 * this.min;
+        this.sec = total
     }
 
     update()
@@ -1051,12 +1069,13 @@ class EndScene
 
         gfx.globalAlpha = per;
         gfx.font = "64px Independence_hall"
-        gfx.fillText("플레이해주셔서 감사합니다!", WIDTH / 2.0 - 350, HEIGHT / 2.0);
+        gfx.fillText("플레이해주셔서 감사합니다!", WIDTH / 2.0 - 350, HEIGHT / 2.0 - 200);
         gfx.font = "32px Independence_hall"
-        gfx.fillText("총 점프 횟수: " + player.numJumps, WIDTH / 2.0 - 110, HEIGHT / 2.0 + 80);
-        gfx.fillText("총 낙하 횟수: " + player.numFalls, WIDTH / 2.0 - 110, HEIGHT / 2.0 + 120);
-        gfx.font = "28px Independence_hall"
-        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 290, HEIGHT / 2.0 + 300);
+        gfx.fillText("총 점프 횟수: " + player.numJumps, WIDTH / 2.0 - 110, HEIGHT / 2.0 - 50);
+        gfx.fillText("총 추락 횟수: " + player.numFalls, WIDTH / 2.0 - 110, HEIGHT / 2.0 - 10);
+        gfx.fillText("총 경과 시간: " + this.hour + "시간 " + this.min + "분 " + this.sec + "초", WIDTH / 2.0 - 195, HEIGHT / 2.0 + 220);
+        gfx.font = "20px Independence_hall"
+        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 210, HEIGHT / 2.0 + 300);
         gfx.globalAlpha = 1.0;
     }
 }
@@ -1233,6 +1252,12 @@ function init()
     images.angel = new Image();
     images.angel.src = "./images/angel.png"
     images.angel.onload = function () { resourceLoaded++; };
+    images.goback = new Image();
+    images.goback.src = "./images/goback.png"
+    images.goback.onload = function () { resourceLoaded++; };
+    images.goback_o = new Image();
+    images.goback_o.src = "./images/goback-o.png"
+    images.goback_o.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
