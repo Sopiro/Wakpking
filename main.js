@@ -41,7 +41,7 @@ const boundFriction = 0.66;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
-let character = 1;
+let character = 0;
 let gameMode = 0;
 let scenes = [];
 let lastScene = 0;
