@@ -7,7 +7,7 @@
 
 
 
-왁물원 게시글: https://cafe.naver.com/steamindiegame
+왁물원 게시글: https://cafe.naver.com/steamindiegame/3280753
 
 ## Preview
 
