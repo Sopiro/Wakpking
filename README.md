@@ -4,6 +4,9 @@
 엔젤님을 만나러 올라가자! 점프점프!
 
 플레이: https://sopiro.github.io/Wakpking/
+위 링크가 작동하지 않으면, [이곳](http://sopiro.ipdisk.co.kr:8000/list/HDD1/Wakpking/)
+
+
 
 왁물원 게시글: https://cafe.naver.com/steamindiegame
 
