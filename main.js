@@ -1028,7 +1028,8 @@ class EndScene
 {
     constructor()
     {
-
+        this.halfHeight = HEIGHT / 2.0;
+        this.halfWidth = WIDTH / 2.0;
     }
 
     start()
@@ -1069,13 +1070,37 @@ class EndScene
 
         gfx.globalAlpha = per;
         gfx.font = "64px Independence_hall"
-        gfx.fillText("플레이해주셔서 감사합니다!", WIDTH / 2.0 - 350, HEIGHT / 2.0 - 200);
+        gfx.fillText("플레이해 주셔서 감사합니다!", this.halfWidth - 365, this.halfHeight - 200);
         gfx.font = "32px Independence_hall"
-        gfx.fillText("총 점프 횟수: " + player.numJumps, WIDTH / 2.0 - 110, HEIGHT / 2.0 - 50);
-        gfx.fillText("총 추락 횟수: " + player.numFalls, WIDTH / 2.0 - 110, HEIGHT / 2.0 - 10);
-        gfx.fillText("총 경과 시간: " + this.hour + "시간 " + this.min + "분 " + this.sec + "초", WIDTH / 2.0 - 195, HEIGHT / 2.0 + 220);
+        gfx.fillText("총 점프 횟수: " + player.numJumps, this.halfWidth - 110, this.halfHeight - 50);
+        gfx.fillText("총 추락 횟수: " + player.numFalls, this.halfWidth - 110, this.halfHeight - 10);
+
+        switch (gameMode)
+        {
+            case -1:
+                gfx.fillStyle = "#ff002a"
+                gfx.fillText("하드모드", this.halfWidth - 70, this.halfHeight + 160);
+                break;
+            case 0:
+                gfx.fillText("노말모드", this.halfWidth - 70, this.halfHeight + 160);
+                break;
+            case 1:
+                gfx.fillText("찐따모드", this.halfWidth - 70, this.halfHeight + 160);
+                break;
+            case 2:
+                gfx.fillText("씹찐따모드", this.halfWidth - 85, this.halfHeight + 160);
+                break;
+
+            default:
+                break;
+        }
+        gfx.fillStyle = "#000000"
+        if (this.hour > 0)
+            gfx.fillText("총 경과 시간: " + this.hour + "시간 " + this.min + "분 " + this.sec + "초", this.halfWidth - 195, this.halfHeight + 220);
+        else
+            gfx.fillText("총 경과 시간: " + this.min + "분 " + this.sec + "초", this.halfWidth - 150, this.halfHeight + 220);
         gfx.font = "20px Independence_hall"
-        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", WIDTH / 2.0 - 210, HEIGHT / 2.0 + 300);
+        gfx.fillText("소스코드: https://github.com/Sopiro/Wakpking", this.halfWidth - 210, this.halfHeight + 300);
         gfx.globalAlpha = 1.0;
     }
 }
