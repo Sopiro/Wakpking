@@ -10,7 +10,9 @@
 ## Preview
 
 <img src=".github/img1.gif" width="500" height="400" />
+
 <img src=".github/img2.gif" width="500" height="400" />
+
 <img src=".github/img3.gif" width="500" height="400" />
 
 bgm: https://youtu.be/5LIEIRRmsiU
