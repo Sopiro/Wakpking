@@ -264,6 +264,16 @@ class Player
         this.angleAABB = new AABB(50, HEIGHT * 8 + 300, 100, 125);
     }
 
+    reset()
+    {
+        this.x = 484;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.onGround = true;
+        this.crouching = false;
+    }
+
     aabb()
     {
         return new AABB(this.x, this.y, this.size, this.size);
@@ -1747,6 +1757,10 @@ function changeScene(nextScene)
 
     if (nextScene == 2)
     {
+        if (lastScene != 3)
+        {
+            player.reset();
+        }
         resetGame();
         audios.okgo.start();
         audios.bgm.start();
@@ -1769,8 +1783,6 @@ function resetGame()
     guideMsg2 = '[↑]로 체크포인트 먹고 [↓]로 설치';
     guideMsg3 = 'Esc 누르면 설정창';
 
-    player.x = 484;
-    player.y = 0;
     levelMax = 0;
     level = 0;
     if (gameMode != 2)
