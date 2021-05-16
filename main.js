@@ -20,7 +20,7 @@ let currentTime = 0;
 let passedTime = 0;
 let msPerFrame = 1000.0 / 144.0;
 
-const numResource = 27;
+const numResource = 30;
 let resourceLoaded = 0;
 
 let images = {};
@@ -41,6 +41,7 @@ const boundFriction = 0.66;
 const JumpConst = 15.0;
 const chargingConst = 600.0;
 
+let character = 1;
 let gameMode = 0;
 let scenes = [];
 let lastScene = 0;
@@ -281,10 +282,17 @@ class Player
 
     getDrawImage()
     {
+        let res = '';
+
         if (this.crouching)
-            return 'crouch';
+            res = "crouch";
         else
-            return 'normal';
+            res = "normal";
+
+        if (character != 0)
+            res += "_chim";
+
+        return res;
     }
 
     collideToLeft(w)
@@ -344,6 +352,11 @@ class Player
 
     playRandomHurtSound()
     {
+        if (character != 0)
+        {
+            audios.ah_chim.start();
+            return;
+        }
         let r = Math.trunc(Math.random() * 3);
 
         switch (r)
@@ -891,9 +904,9 @@ class SettScene
         this.barWidth = 300;
         this.barHeight = 2;
 
-        this.barStart = (WIDTH - this.barWidth) / 2.0;
+        this.barStart = (WIDTH - this.barWidth) / 2.0 + 10;
 
-        this.barHeightBase = HEIGHT / 2.0 - 100;
+        this.barHeightBase = HEIGHT / 2.0;
         this.barGap = 50;
 
         this.handleWidth = 10;
@@ -909,7 +922,7 @@ class SettScene
 
         this.btnStartX = (WIDTH - 360) / 2.0;
         this.btnEndX = (WIDTH - 360) / 2.0 + 360;
-        this.btnHeightBase = HEIGHT / 2.0 - 100;
+        this.btnHeightBase = this.barHeightBase + 70;
     }
 
     update()
@@ -962,7 +975,7 @@ class SettScene
 
         if (mouse.currX > this.btnStartX && mouse.currX <= this.btnEndX)
         {
-            if (mouse.currY > this.btnHeightBase + 46 + 100 && mouse.currY <= this.btnHeightBase + 46 + 100 + 109)
+            if (mouse.currY > this.btnHeightBase + 46 && mouse.currY <= this.btnHeightBase + 46 + 109)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -970,7 +983,7 @@ class SettScene
                 }
                 this.level_img = images.level_o;
             }
-            else if (mouse.currY > this.btnHeightBase + 46 + 100 + 120 && mouse.currY <= this.btnHeightBase + 46 + 100 + 109 + 120)
+            else if (mouse.currY > this.btnHeightBase + 46 + 120 && mouse.currY <= this.btnHeightBase + 46 + 109 + 120)
             {
                 if (!mouse.curr_down && mouse.last_down)
                 {
@@ -989,6 +1002,17 @@ class SettScene
             this.level_img = images.level;
             this.goback_img = images.goback;
         }
+
+        if (mouse.currX > WIDTH / 2.0 - 50 && mouse.currX <= WIDTH / 2.0 + 50)
+        {
+            if (mouse.currY > this.barHeightBase - 150 && mouse.currY <= this.barHeightBase - 50)
+            {
+                if (!mouse.curr_down && mouse.last_down)
+                {
+                    character = character == 0 ? 1 : 0;
+                }
+            }
+        }
     }
 
     render()
@@ -997,6 +1021,12 @@ class SettScene
         gfx.fillText("설정", (WIDTH - 250) / 2.0, 180);
 
         gfx.font = "28px Independence_hall"
+        gfx.fillText("캐릭터", this.barStart + 10, this.barHeightBase - 80);
+        if (character == 0)
+            gfx.drawImage(images.normal, WIDTH / 2.0 - 50, this.barHeightBase - 150, 100, 100)
+        else
+            gfx.drawImage(images.normal_chim, WIDTH / 2.0 - 50, this.barHeightBase - 150, 100, 100)
+
         gfx.fillText("효과음", this.barStart - 100, this.barHeightBase + this.handleWidth);
         gfx.fillText("배경음", this.barStart - 100, this.barHeightBase + this.handleWidth + this.barGap);
 
@@ -1019,8 +1049,8 @@ class SettScene
         gfx.fillText(Math.trunc(this.handle1 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth);
         gfx.fillText(Math.trunc(this.handle2 * 100), this.barStart + this.barWidth + 10, this.barHeightBase + this.handleWidth + this.barGap);
 
-        gfx.drawImage(this.level_img, (WIDTH - 435) / 2.0, this.btnHeightBase + 100);
-        gfx.drawImage(this.goback_img, (WIDTH - 435) / 2.0, this.btnHeightBase + 100 + 120);
+        gfx.drawImage(this.level_img, (WIDTH - 435) / 2.0, this.btnHeightBase);
+        gfx.drawImage(this.goback_img, (WIDTH - 435) / 2.0, this.btnHeightBase + 120);
     }
 }
 
@@ -1283,6 +1313,15 @@ function init()
     images.goback_o = new Image();
     images.goback_o.src = "./images/goback-o.png"
     images.goback_o.onload = function () { resourceLoaded++; };
+    images.normal_chim = new Image();
+    images.normal_chim.src = "./images/normal_chim.png"
+    images.normal_chim.onload = function () { resourceLoaded++; };
+    images.crouch_chim = new Image();
+    images.crouch_chim.src = "./images/crouch_chim.png"
+    images.crouch_chim.onload = function () { resourceLoaded++; };
+    images.foothold_chim = new Image();
+    images.foothold_chim.src = "./images/foothold_chim.png"
+    images.foothold_chim.onload = function () { resourceLoaded++; };
 
     //Audios
     audios.landing = new Audio();
@@ -1308,6 +1347,8 @@ function init()
     audios.tp.src = "./audios/tp.ogg";
     audios.omat = new Audio();
     audios.omat.src = "./audios/omat.ogg";
+    audios.ah_chim = new Audio();
+    audios.ah_chim.src = "./audios/ah_chim.ogg";
 
     audios.landing.start = function ()
     {
@@ -1385,6 +1426,13 @@ function init()
         audios.omat.volume = volume;
         audios.omat.currentTime = 0;
         audios.omat.play();
+    };
+    audios.ah_chim.start = function ()
+    {
+        if (isMuted) return;
+        audios.ah_chim.volume = volume;
+        audios.ah_chim.currentTime = 0;
+        audios.ah_chim.play();
     };
 
     player = new Player((WIDTH - 32) / 2.0, 0);
@@ -1747,7 +1795,11 @@ function drawAABB(aabb)
 function drawBlock(x, y, w, h)
 {
     drawRect(x, y, w, h);
-    gfx.drawImage(images.foothold, 0, 0, w, 100 + h, x + 5, HEIGHT - y - 5, w - 10, -h + 10);
+
+    if (character != 0)
+        gfx.drawImage(images.foothold_chim, 0, 0, w, 100 + h, x + 5, HEIGHT - y - 5, w - 10, -h + 10);
+    else
+        gfx.drawImage(images.foothold, 0, 0, w, 100 + h, x + 5, HEIGHT - y - 5, w - 10, -h + 10);
 }
 
 function drawRect(x, y, w, h)
