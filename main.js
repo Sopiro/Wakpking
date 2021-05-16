@@ -873,6 +873,7 @@ class LevelScene
         }
         else
         {
+            this.hard_img = images.mode_hard;
             this.normal_img = images.mode_normal;
             this.jjin_img = images.mode_jjin;
             this.sjjin_img = images.mode_sjjin;
