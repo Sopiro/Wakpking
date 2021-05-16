@@ -5,6 +5,8 @@
 
 플레이: https://sopiro.github.io/Wakpking/
 
+왁물원 게시글: https://cafe.naver.com/steamindiegame
+
 ## Preview
 
 <img src=".github/img1.gif" width="500" height="400" />
