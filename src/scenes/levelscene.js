@@ -1,14 +1,14 @@
 import * as Resources from "../resources.js";
 import { Constants } from "../constants.js";
 import * as Input from "../input.js";
+import {Scene} from "./scene.js";
 
-
-export class LevelScene
+export class LevelScene extends Scene
 {
     constructor(gfx, game)
     {
-        this.gfx = gfx;
-        this.game = game;
+        super(gfx, game);
+
         this.hard_img = Resources.images.mode_hard;
         this.normal_img = Resources.images.mode_normal;
         this.jjin_img = Resources.images.mode_jjin;

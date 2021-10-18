@@ -1,14 +1,14 @@
 import * as Resources from "../resources.js";
 import { Constants } from "../constants.js";
 import * as Input from "../input.js";
+import { Scene } from "./scene.js";
 
-
-export class MainScene
+export class MainScene extends Scene
 {
     constructor(gfx, game)
     {
-        this.gfx = gfx;
-        this.game = game;
+        super(gfx, game);
+
         this.titlePos = 0;
         this.start_img = Resources.images.start;
         this.sett_img = Resources.images.sett;

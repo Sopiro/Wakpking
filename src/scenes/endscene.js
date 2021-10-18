@@ -1,13 +1,14 @@
 import * as Resources from "../resources.js";
 import { Constants } from "../constants.js";
 import { Vector } from "../vector.js";
+import {Scene} from "./scene.js";
 
-export class EndScene
+export class EndScene extends Scene
 {
     constructor(gfx, game)
     {
-        this.gfx = gfx;
-        this.game = game;
+        super(gfx, game);
+
         this.halfHeight = Constants.HEIGHT / 2.0;
         this.halfWidth = Constants.WIDTH / 2.0;
     }
@@ -26,7 +27,7 @@ export class EndScene
         this.sec = total
     }
 
-    update()
+    update(time)
     {
         this.engelPos.y = 300 + Math.sin(this.time / 100.0) * 80 + this.time / 2;
         this.engelPos.x = 50 + this.time

@@ -1,13 +1,14 @@
 import * as Resources from "../resources.js";
 import { Constants } from "../constants.js";
 import * as Input from "../input.js";
+import {Scene} from "./scene.js";
 
-export class SettScene
+export class SettScene extends Scene
 {
     constructor(gfx, game)
     {
-        this.gfx = gfx;
-        this.game = game;
+        super(gfx, game);
+
         this.barWidth = 300;
         this.barHeight = 2;
 
@@ -32,7 +33,7 @@ export class SettScene
         this.btnHeightBase = this.barHeightBase + 70;
     }
 
-    update()
+    update(time)
     {
         // console.log(Input.mouse.currY);
 
