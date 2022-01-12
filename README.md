@@ -17,6 +17,6 @@
 
 <img src=".github/img3.gif" width="500" height="400" />
 
----
-- bgm: https://youtu.be/5LIEIRRmsiU  
+## 
+- BGM: https://youtu.be/5LIEIRRmsiU  
 - 이 게임은 바닐라 자바스크립트로 만들어졌습니다.  
