@@ -7,7 +7,7 @@
 플레이: https://sopiro.itch.io/wakpking
 
 우왁굳 플레이 영상: https://youtu.be/cS4_2__n1Nw  
-왁물원 게시글: https://cafe.naver.com/steamindiegame/3280753  
+왁물원 게시글: https://cafe.naver.com/steamindiegame/3280421  
 
 ## 미리보기
 
