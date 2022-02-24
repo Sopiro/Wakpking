@@ -1,5 +1,7 @@
 # 왁프킹 Wakpking
 
+Checkout [here](https://github.com/Sopiro/Wakpking/blob/master/README-en.md) for the english version of README
+
 왁프킹, [점프킹](https://namu.wiki/w/Jump%20King?from=%EC%A0%90%ED%94%84%ED%82%B9) 클론게임!  
 엔젤님을 만나러 올라가자! 점프점프!
 
